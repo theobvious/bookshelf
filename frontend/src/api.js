@@ -39,6 +39,11 @@ export const updateRecommendation = (id, data) =>
 export const deleteRecommendation = (id) =>
   request(`/recommendations/${id}/`, { method: 'DELETE' });
 
+export const clearRecommendations = (params = {}) => {
+  const qs = new URLSearchParams(Object.entries(params).filter(([, v]) => v !== undefined && v !== null));
+  return request(`/recommendations/${qs.toString() ? '?' + qs : ''}`, { method: 'DELETE' });
+};
+
 // Books
 export const getBooks = (params = {}) => {
   const qs = new URLSearchParams(Object.entries(params).filter(([, v]) => v !== undefined && v !== null));

@@ -209,6 +209,18 @@ def update_recommendation(
     return _rec_to_out(rec)
 
 
+@router.delete("/api/recommendations/", status_code=204)
+def clear_recommendations(
+    acquired: Optional[bool] = Query(default=None),
+    db: Session = Depends(get_db),
+):
+    q = db.query(Recommendation)
+    if acquired is not None:
+        q = q.filter(Recommendation.acquired == acquired)
+    q.delete(synchronize_session=False)
+    db.commit()
+
+
 @router.delete("/api/recommendations/{rec_id}", status_code=204)
 def delete_recommendation(rec_id: int, db: Session = Depends(get_db)):
     rec = db.get(Recommendation, rec_id)

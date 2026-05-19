@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { getRecommendations, updateRecommendation, recommendBook, getShelfRecommendations } from '../api.js';
+import { getRecommendations, updateRecommendation, recommendBook, getShelfRecommendations, clearRecommendations } from '../api.js';
 
 function CoverPlaceholder() {
   return <div className="w-10 h-14 rounded bg-stone-200 flex-shrink-0" />;
@@ -94,6 +94,7 @@ export default function RecommendationsPage() {
   const [loading, setLoading] = useState(true);
   const [showDismissed, setShowDismissed] = useState(false);
   const [regeneratingId, setRegeneratingId] = useState(null);
+  const [clearing, setClearing] = useState(false);
 
   const fetchRecs = useCallback(async (includeDismissed) => {
     setLoading(true);
@@ -178,6 +179,7 @@ export default function RecommendationsPage() {
             Books recommended based on your catalog.
           </p>
         </div>
+        <div className="flex gap-2">
         <button
           onClick={handleToggleDismissed}
           className={`text-xs px-3 py-1.5 rounded-lg border transition-colors whitespace-nowrap ${
@@ -188,6 +190,25 @@ export default function RecommendationsPage() {
         >
           {showDismissed ? 'Hide dismissed' : 'Show dismissed'}
         </button>
+        {recs.length > 0 && (
+          <button
+            disabled={clearing}
+            onClick={async () => {
+              if (!confirm('Clear all recommendations? This cannot be undone.')) return;
+              setClearing(true);
+              try {
+                await clearRecommendations();
+                setRecs([]);
+              } finally {
+                setClearing(false);
+              }
+            }}
+            className="text-xs px-3 py-1.5 rounded-lg border border-red-100 text-red-500 hover:bg-red-50 disabled:opacity-50 whitespace-nowrap"
+          >
+            {clearing ? 'Clearing…' : 'Clear all'}
+          </button>
+        )}
+        </div>
       </div>
 
       {loading && (
