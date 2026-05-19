@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link, useSearchParams } from 'react-router-dom';
+import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { getShelf, deleteBook, getShelfRecommendations } from '../api.js';
 import ShelfSpineView from '../components/ShelfSpineView.jsx';
 import BookCard from '../components/BookCard.jsx';
@@ -14,9 +14,8 @@ export default function ShelfDetailPage() {
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState('spines');
   const [showAddBook, setShowAddBook] = useState(false);
-  const [recs, setRecs] = useState(null);
   const [recsLoading, setRecsLoading] = useState(false);
-  const [recsError, setRecsError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     getShelf(id)
@@ -47,12 +46,10 @@ export default function ShelfDetailPage() {
 
   async function loadRecommendations() {
     setRecsLoading(true);
-    setRecsError(null);
     try {
-      setRecs(await getShelfRecommendations(id));
-    } catch (e) {
-      setRecsError(e.message);
-    } finally {
+      await getShelfRecommendations(id);
+      navigate('/recommendations');
+    } catch {
       setRecsLoading(false);
     }
   }
@@ -121,7 +118,7 @@ export default function ShelfDetailPage() {
         <button
           onClick={loadRecommendations}
           disabled={recsLoading || confirmed.length === 0}
-          className="text-xs px-3 py-1.5 rounded-lg bg-amber-100 text-amber-800 hover:bg-amber-200 disabled:opacity-50"
+          className="text-xs px-3 py-1.5 rounded-lg bg-stone-800 text-white hover:bg-stone-700 disabled:opacity-50"
         >
           {recsLoading ? 'Thinking…' : 'Recommend books'}
         </button>
@@ -164,31 +161,6 @@ export default function ShelfDetailPage() {
           )}
           {books.length === 0 && (
             <p className="text-sm text-stone-400 text-center py-8">No books on this shelf yet.</p>
-          )}
-        </div>
-      )}
-
-      {/* Recommendations */}
-      {(recs || recsError) && (
-        <div className="rounded-xl border border-stone-200 bg-white p-5">
-          <h2 className="font-semibold text-base mb-1">Book recommendations</h2>
-          {recsError && <p className="text-sm text-red-600">{recsError}</p>}
-          {recs && (
-            <>
-              <p className="text-sm text-stone-500 italic mb-4">{recs.theme}</p>
-              <div className="space-y-3">
-                {recs.recommendations.map((rec, i) => (
-                  <div key={i} className="flex gap-3">
-                    <span className="text-stone-300 text-sm font-mono mt-0.5 w-4 flex-shrink-0">{i + 1}.</span>
-                    <div>
-                      <p className="text-sm font-medium">{rec.title}</p>
-                      <p className="text-xs text-stone-500">{rec.author}</p>
-                      <p className="text-xs text-stone-400 mt-0.5">{rec.reason}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </>
           )}
         </div>
       )}

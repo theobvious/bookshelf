@@ -116,9 +116,11 @@ class RecommendationUpdate(BaseModel):
 
 class RecommendationOut(BaseModel):
     id: int
-    source_book_id: int
+    source_book_id: Optional[int] = None
     source_book_title: Optional[str] = None
     source_book_author: Optional[str] = None
+    source_shelf_id: Optional[int] = None
+    source_shelf_label: Optional[str] = None
     title: str
     author: Optional[str] = None
     reason: Optional[str] = None

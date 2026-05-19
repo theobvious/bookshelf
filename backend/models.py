@@ -7,7 +7,8 @@ from database import Base
 class Recommendation(Base):
     __tablename__ = "recommendations"
     id = Column(Integer, primary_key=True, index=True)
-    source_book_id = Column(Integer, ForeignKey("books.id", ondelete="CASCADE"), nullable=False)
+    source_book_id = Column(Integer, ForeignKey("books.id", ondelete="CASCADE"), nullable=True)
+    source_shelf_id = Column(Integer, ForeignKey("shelves.id", ondelete="CASCADE"), nullable=True)
     title = Column(String, nullable=False)
     author = Column(String, nullable=True)
     reason = Column(Text, nullable=True)
@@ -16,7 +17,8 @@ class Recommendation(Base):
     acquired = Column(Boolean, default=False)
     dismissed = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
-    source_book = relationship("Book", back_populates="recommendations")
+    source_book = relationship("Book", back_populates="recommendations", foreign_keys=[source_book_id])
+    source_shelf = relationship("Shelf", foreign_keys=[source_shelf_id])
 
 
 class Shelf(Base):
@@ -28,6 +30,7 @@ class Shelf(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     shelf_books = relationship("ShelfBook", back_populates="shelf", cascade="all, delete-orphan")
+    recommendations = relationship("Recommendation", foreign_keys="Recommendation.source_shelf_id", cascade="all, delete-orphan")
 
 
 class Book(Base):

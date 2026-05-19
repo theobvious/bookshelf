@@ -22,8 +22,8 @@ export async function createShelf(label, photoFile) {
   return request("/shelves/", { method: "POST", body: form });
 }
 
-export const getShelfRecommendations = (shelfId) =>
-  request(`/shelves/${shelfId}/recommendations/`);
+export const getShelfRecommendations = (shelfId, regenerate = false) =>
+  request(`/shelves/${shelfId}/recommendations${regenerate ? '?regenerate=true' : ''}`, { method: 'POST' });
 
 export const recommendBook = (id, regenerate = false) =>
   request(`/books/${id}/recommend${regenerate ? '?regenerate=true' : ''}`, { method: 'POST' });

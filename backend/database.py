@@ -69,7 +69,8 @@ def init_db():
         conn.execute(text("""
             CREATE TABLE IF NOT EXISTS recommendations (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                source_book_id INTEGER NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+                source_book_id INTEGER REFERENCES books(id) ON DELETE CASCADE,
+                source_shelf_id INTEGER REFERENCES shelves(id) ON DELETE CASCADE,
                 title TEXT NOT NULL,
                 author TEXT,
                 reason TEXT,
@@ -80,4 +81,32 @@ def init_db():
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         """))
+        # Migrate existing recommendations table if source_shelf_id column is missing
+        cols = [r[1] for r in conn.execute(text("PRAGMA table_info(recommendations)")).fetchall()]
+        if "source_shelf_id" not in cols:
+            conn.execute(text("""
+                CREATE TABLE recommendations_new (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    source_book_id INTEGER REFERENCES books(id) ON DELETE CASCADE,
+                    source_shelf_id INTEGER REFERENCES shelves(id) ON DELETE CASCADE,
+                    title TEXT NOT NULL,
+                    author TEXT,
+                    reason TEXT,
+                    cover_url TEXT,
+                    isbn TEXT,
+                    acquired BOOLEAN DEFAULT 0,
+                    dismissed BOOLEAN DEFAULT 0,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+            conn.execute(text("""
+                INSERT INTO recommendations_new
+                    (id, source_book_id, source_shelf_id, title, author, reason,
+                     cover_url, isbn, acquired, dismissed, created_at)
+                SELECT id, source_book_id, NULL, title, author, reason,
+                       cover_url, isbn, acquired, dismissed, created_at
+                FROM recommendations
+            """))
+            conn.execute(text("DROP TABLE recommendations"))
+            conn.execute(text("ALTER TABLE recommendations_new RENAME TO recommendations"))
         conn.commit()

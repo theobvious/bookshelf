@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { getRecommendations, updateRecommendation, deleteRecommendation, recommendBook } from '../api.js';
+import { getRecommendations, updateRecommendation, recommendBook, getShelfRecommendations } from '../api.js';
 
 function CoverPlaceholder() {
   return <div className="w-10 h-14 rounded bg-stone-200 flex-shrink-0" />;
@@ -134,31 +134,40 @@ export default function RecommendationsPage() {
     }
   }
 
-  async function handleRegenerate(sourceBookId) {
-    setRegeneratingId(sourceBookId);
+  async function handleRegenerate(group) {
+    setRegeneratingId(group.key);
     try {
-      await recommendBook(sourceBookId, true);
+      if (group.source_shelf_id) {
+        await getShelfRecommendations(group.source_shelf_id, true);
+      } else {
+        await recommendBook(group.source_book_id, true);
+      }
       await fetchRecs(showDismissed);
     } finally {
       setRegeneratingId(null);
     }
   }
 
-  // Group by source_book_id
-  const groups = {};
+  // Group by source — shelf recs keyed by "shelf:{id}", book recs by "book:{id}"
+  const groupMap = {};
   recs.forEach((rec) => {
-    const key = rec.source_book_id;
-    if (!groups[key]) {
-      groups[key] = {
-        source_book_id: key,
-        source_book_title: rec.source_book_title,
-        source_book_author: rec.source_book_author,
+    const key = rec.source_shelf_id ? `shelf:${rec.source_shelf_id}` : `book:${rec.source_book_id}`;
+    if (!groupMap[key]) {
+      groupMap[key] = {
+        key,
+        source_book_id: rec.source_book_id,
+        source_shelf_id: rec.source_shelf_id,
+        label: rec.source_shelf_id
+          ? rec.source_shelf_label || 'Shelf'
+          : rec.source_book_title || 'Unknown book',
+        sublabel: rec.source_shelf_id ? null : rec.source_book_author,
+        isShelf: !!rec.source_shelf_id,
         items: [],
       };
     }
-    groups[key].items.push(rec);
+    groupMap[key].items.push(rec);
   });
-  const groupList = Object.values(groups);
+  const groupList = Object.values(groupMap);
 
   return (
     <div className="space-y-6">
@@ -190,29 +199,30 @@ export default function RecommendationsPage() {
           <p className="text-sm text-stone-500">
             {showDismissed
               ? 'No dismissed recommendations.'
-              : 'No recommendations yet. Open a book from the shelf and click "Recommend similar".'}
+              : 'No recommendations yet. Click "Recommend books" on a shelf, or open a book spine and choose "Recommend similar".'}
           </p>
         </div>
       )}
 
       {!loading && groupList.map((group) => (
-        <div key={group.source_book_id} className="space-y-2">
-          <div className="flex items-center justify-between gap-2">
+        <div key={group.key} className="space-y-2">
+          <div className="flex items-center justify-between gap-2 border-b border-parchment-200 pb-2">
             <div>
-              <h2 className="text-sm font-semibold text-stone-700 tracking-wide">
-                Because you have: {group.source_book_title || 'Unknown title'}
-              </h2>
-              {group.source_book_author && (
-                <p className="text-xs text-stone-400">{group.source_book_author}</p>
-              )}
+              <p className="text-xs text-stone-400 uppercase tracking-widest mb-0.5">
+                {group.isShelf ? 'Because of your shelf' : 'Because you have'}
+              </p>
+              <h2 className="text-sm font-semibold text-stone-800">{group.label}</h2>
+              {group.sublabel && <p className="text-xs text-stone-400">{group.sublabel}</p>}
             </div>
-            <button
-              onClick={() => handleRegenerate(group.source_book_id)}
-              disabled={regeneratingId === group.source_book_id}
-              className="text-xs px-2.5 py-1 rounded-lg border border-stone-200 hover:bg-stone-50 text-stone-500 disabled:opacity-50 whitespace-nowrap"
-            >
-              {regeneratingId === group.source_book_id ? 'Regenerating...' : 'Regenerate'}
-            </button>
+            {!showDismissed && (
+              <button
+                onClick={() => handleRegenerate(group)}
+                disabled={regeneratingId === group.key}
+                className="text-xs px-2.5 py-1 rounded-lg border border-stone-200 hover:bg-stone-50 text-stone-500 disabled:opacity-50 whitespace-nowrap"
+              >
+                {regeneratingId === group.key ? 'Refreshing…' : 'Refresh'}
+              </button>
+            )}
           </div>
           <div className="space-y-1.5">
             {group.items.map((rec) => (

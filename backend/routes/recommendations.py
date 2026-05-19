@@ -9,18 +9,36 @@ from database import get_db
 from models import Book, Recommendation, Shelf
 from schemas import RecommendationOut, RecommendationUpdate, RecommendationsOut
 from services.enrichment import enrich_book
-from services.recommendations import get_book_recommendations, get_recommendations
+from services.recommendations import get_book_recommendations, get_recommendations as get_shelf_recommendations
 
 router = APIRouter(tags=["recommendations"])
 
 
-# ── Existing shelf-level endpoint ────────────────────────────────────────────
+# ── Shelf-level endpoint ─────────────────────────────────────────────────────
 
-@router.get("/api/shelves/{shelf_id}/recommendations", response_model=RecommendationsOut)
-def shelf_recommendations(shelf_id: int, db: Session = Depends(get_db)):
+@router.post("/api/shelves/{shelf_id}/recommendations", response_model=list[RecommendationOut])
+async def shelf_recommendations(
+    shelf_id: int,
+    regenerate: bool = Query(default=False),
+    db: Session = Depends(get_db),
+):
     shelf = db.get(Shelf, shelf_id)
     if not shelf:
         raise HTTPException(status_code=404, detail="Shelf not found")
+
+    if regenerate:
+        db.query(Recommendation).filter(
+            Recommendation.source_shelf_id == shelf_id,
+            Recommendation.dismissed == False,
+        ).update({"dismissed": True})
+        db.commit()
+
+    existing = db.query(Recommendation).filter(
+        Recommendation.source_shelf_id == shelf_id,
+        Recommendation.dismissed == False,
+    ).all()
+    if existing and not regenerate:
+        return [_rec_to_out(r) for r in existing]
 
     books = []
     for sb in shelf.shelf_books:
@@ -31,18 +49,33 @@ def shelf_recommendations(shelf_id: int, db: Session = Depends(get_db)):
                     genres = json.loads(sb.book.genres)
                 except Exception:
                     pass
-            books.append({
-                "title": sb.book.title,
-                "author": sb.book.author,
-                "genres": genres,
-            })
+            books.append({"title": sb.book.title, "author": sb.book.author, "genres": genres})
 
-    result = get_recommendations(shelf.label, books)
-    return RecommendationsOut(
-        shelf_id=shelf_id,
-        theme=result.get("theme", ""),
-        recommendations=result.get("recommendations", []),
-    )
+    result = get_shelf_recommendations(shelf.label, books)
+    raw_recs = result.get("recommendations", [])
+
+    enrichment_tasks = [enrich_book(r.get("title"), r.get("author"), None) for r in raw_recs]
+    enriched_list = await asyncio.gather(*enrichment_tasks)
+
+    saved = []
+    for raw, enriched in zip(raw_recs, enriched_list):
+        rec = Recommendation(
+            source_shelf_id=shelf_id,
+            title=raw.get("title", ""),
+            author=raw.get("author"),
+            reason=raw.get("reason"),
+            cover_url=enriched.get("cover_url"),
+            isbn=enriched.get("isbn"),
+        )
+        db.add(rec)
+        db.flush()
+        saved.append(rec)
+
+    db.commit()
+    for rec in saved:
+        db.refresh(rec)
+
+    return [_rec_to_out(r) for r in saved]
 
 
 # ── New per-book recommendation endpoints ────────────────────────────────────
@@ -53,6 +86,8 @@ def _rec_to_out(rec: Recommendation) -> RecommendationOut:
         source_book_id=rec.source_book_id,
         source_book_title=rec.source_book.title if rec.source_book else None,
         source_book_author=rec.source_book.author if rec.source_book else None,
+        source_shelf_id=rec.source_shelf_id,
+        source_shelf_label=rec.source_shelf.label if rec.source_shelf else None,
         title=rec.title,
         author=rec.author,
         reason=rec.reason,
