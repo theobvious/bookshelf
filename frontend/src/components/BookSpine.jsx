@@ -73,6 +73,25 @@ export default function BookSpine({ book, onClick, selected, highlighted, height
           pointerEvents: 'none',
         }}
       />
+
+      {/* Lent indicator — small dot at the top */}
+      {book.lent_to && (
+        <div
+          title={`Lent to ${book.lent_to}`}
+          style={{
+            position: 'absolute',
+            top: 8,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: 6,
+            height: 6,
+            borderRadius: '50%',
+            backgroundColor: '#fbbf24',
+            boxShadow: '0 0 0 1.5px rgba(0,0,0,0.3)',
+            pointerEvents: 'none',
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -16,6 +16,7 @@ class BookBase(BaseModel):
     needs_review: bool = False
     confidence: Optional[float] = None
     review_notes: Optional[str] = None
+    lent_to: Optional[str] = None
     source: str = "extracted"
 
 
@@ -34,6 +35,7 @@ class BookUpdate(BaseModel):
     genres: Optional[list] = None
     needs_review: Optional[bool] = None
     confidence: Optional[float] = None
+    lent_to: Optional[str] = None
 
 
 class BookOut(BookBase):

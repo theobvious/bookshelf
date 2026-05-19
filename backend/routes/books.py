@@ -49,6 +49,7 @@ def _book_to_out(book: Book, db: Session, context_shelf_id: Optional[int] = None
         needs_review=book.needs_review,
         confidence=book.confidence,
         review_notes=book.review_notes,
+        lent_to=book.lent_to,
         source=book.source,
         created_at=book.created_at,
         shelf_row=shelf_row,

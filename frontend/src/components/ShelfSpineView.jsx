@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import BookSpine from './BookSpine.jsx';
 import BookEditModal from './BookEditModal.jsx';
-import { deleteBook } from '../api.js';
+import { deleteBook, updateBook } from '../api.js';
 
 const LANG_NAMES = {
   en: 'English', fr: 'French', de: 'German', es: 'Spanish', it: 'Italian',
@@ -142,6 +142,8 @@ export default function ShelfSpineView({ books, onUpdate, onDelete, shelfPhotoUr
 
 function BookPopover({ book, anchorX, anchorY, onClose, onUpdate, onDelete }) {
   const [editing, setEditing] = useState(false);
+  const [lendMode, setLendMode] = useState(false);
+  const [borrowerName, setBorrowerName] = useState('');
   const ref = useRef(null);
   const [pos, setPos] = useState({ visibility: 'hidden', position: 'fixed' });
 
@@ -194,11 +196,74 @@ function BookPopover({ book, anchorX, anchorY, onClose, onUpdate, onDelete }) {
         {book.description && (
           <p className="text-xs text-stone-500 mt-3 leading-relaxed line-clamp-3">{book.description}</p>
         )}
+
+        {/* Lent status */}
+        {book.lent_to && !lendMode && (
+          <div className="mt-3 flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg bg-amber-50 border border-amber-200">
+            <span className="text-xs text-amber-800">Lent to <strong>{book.lent_to}</strong></span>
+            <button
+              onClick={async () => {
+                const updated = await updateBook(book.id, { lent_to: null });
+                onUpdate(updated);
+              }}
+              className="text-xs text-amber-700 hover:underline whitespace-nowrap"
+            >
+              Mark returned
+            </button>
+          </div>
+        )}
+
+        {!book.lent_to && lendMode && (
+          <div className="mt-3 flex gap-1.5">
+            <input
+              autoFocus
+              type="text"
+              placeholder="Borrower's name"
+              value={borrowerName}
+              onChange={(e) => setBorrowerName(e.target.value)}
+              onKeyDown={async (e) => {
+                if (e.key === 'Enter' && borrowerName.trim()) {
+                  const updated = await updateBook(book.id, { lent_to: borrowerName.trim() });
+                  onUpdate(updated);
+                  setLendMode(false);
+                  setBorrowerName('');
+                } else if (e.key === 'Escape') {
+                  setLendMode(false);
+                  setBorrowerName('');
+                }
+              }}
+              className="flex-1 text-xs border border-parchment-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-300"
+            />
+            <button
+              onClick={async () => {
+                if (!borrowerName.trim()) return;
+                const updated = await updateBook(book.id, { lent_to: borrowerName.trim() });
+                onUpdate(updated);
+                setLendMode(false);
+                setBorrowerName('');
+              }}
+              className="text-xs px-2.5 py-1.5 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-800 font-medium"
+            >
+              Lend
+            </button>
+            <button onClick={() => { setLendMode(false); setBorrowerName(''); }}
+              className="text-xs px-2 py-1.5 rounded-lg hover:bg-stone-50 text-stone-400">
+              &times;
+            </button>
+          </div>
+        )}
+
         <div className="flex gap-1.5 mt-3">
           <button onClick={() => setEditing(true)}
             className="flex-1 text-xs py-1.5 rounded-lg border border-parchment-200 hover:bg-parchment-50 font-medium">
             Edit
           </button>
+          {!book.lent_to && !lendMode && (
+            <button onClick={() => setLendMode(true)}
+              className="text-xs px-2.5 py-1.5 rounded-lg border border-amber-200 hover:bg-amber-50 text-amber-700">
+              Lend
+            </button>
+          )}
           <button onClick={() => { if (confirm('Remove this book?')) onDelete(book.id); }}
             className="text-xs px-2.5 py-1.5 rounded-lg border border-red-100 hover:bg-red-50 text-red-600">
             Delete

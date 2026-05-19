@@ -107,6 +107,11 @@ export default function SearchPage() {
                         {locationLabel(loc)}
                       </Link>
                     ))}
+                    {book.lent_to && (
+                      <span className="text-xs px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
+                        Lent to {book.lent_to}
+                      </span>
+                    )}
                     {book.needs_review && (
                       <span className="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">
                         Needs review

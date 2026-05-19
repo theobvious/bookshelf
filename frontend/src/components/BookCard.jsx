@@ -51,6 +51,11 @@ export default function BookCard({ book, onUpdate, onDelete, showShelf, shelfLab
                 {book.confidence != null && ` (${Math.round(book.confidence * 100)}%)`}
               </span>
             )}
+            {book.lent_to && (
+              <span className="text-xs px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
+                Lent to {book.lent_to}
+              </span>
+            )}
             {showShelf && shelfLabels?.length > 0 && (
               <span className="text-xs text-stone-400">{shelfLabels.join(", ")}</span>
             )}
