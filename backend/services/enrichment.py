@@ -46,6 +46,8 @@ async def _try_open_library(title: str, author: Optional[str], language: Optiona
             result["isbn"] = doc["isbn"][0]
         if doc.get("cover_i"):
             result["cover_url"] = OPEN_LIBRARY_COVER.format(doc["cover_i"])
+        if doc.get("author_name"):
+            result["author"] = doc["author_name"][0]
         if doc.get("subject"):
             result["genres"] = doc["subject"][:8]
         if doc.get("first_sentence"):
@@ -85,6 +87,9 @@ async def _try_google_books(title: str, author: Optional[str]) -> dict:
 
         if info.get("imageLinks", {}).get("thumbnail"):
             result["cover_url"] = info["imageLinks"]["thumbnail"].replace("http://", "https://")
+
+        if info.get("authors"):
+            result["author"] = ", ".join(info["authors"])
 
         if info.get("categories"):
             result["genres"] = info["categories"]

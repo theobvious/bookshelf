@@ -48,7 +48,8 @@ export default function BookEditModal({ book, shelfPhotoUrl, onSave, onClose }) 
     }
   }
 
-  const showCrop = shelfPhotoUrl && book.bbox && book.bbox.length === 4;
+  const hasBbox = book.bbox && book.bbox.length === 4;
+  const showPhotoSection = !!shelfPhotoUrl;
 
   return (
     <div
@@ -66,10 +67,18 @@ export default function BookEditModal({ book, shelfPhotoUrl, onSave, onClose }) 
         {book.needs_review && (
           <div className="mb-4 p-3 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-800">
             <div className="flex gap-3 items-start">
-              {showCrop && (
+              {showPhotoSection && (
                 <div className="flex-shrink-0">
-                  <SpineCrop photoUrl={shelfPhotoUrl} bbox={book.bbox} width={52} height={110} />
-                  <p className="text-xs text-amber-700 text-center mt-1">Spine</p>
+                  {hasBbox ? (
+                    <SpineCrop photoUrl={shelfPhotoUrl} bbox={book.bbox} width={52} height={110} />
+                  ) : (
+                    <img
+                      src={shelfPhotoUrl}
+                      alt="shelf"
+                      style={{ width: 72, height: 110, objectFit: 'cover', objectPosition: 'center', borderRadius: 4 }}
+                    />
+                  )}
+                  <p className="text-xs text-amber-700 text-center mt-1">{hasBbox ? 'Spine' : 'Shelf'}</p>
                 </div>
               )}
               <div>

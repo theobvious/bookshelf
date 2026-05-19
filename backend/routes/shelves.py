@@ -111,7 +111,7 @@ async def create_shelf(
             book = Book(
                 title=raw.get("title"),
                 original_title=raw.get("original_title") or raw.get("title"),
-                author=raw.get("author"),
+                author=raw.get("author") or meta.get("author"),
                 language=raw.get("language"),
                 isbn=meta.get("isbn"),
                 cover_url=meta.get("cover_url"),
