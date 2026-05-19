@@ -10,10 +10,10 @@ function NavItem({ to, children }) {
     <NavLink
       to={to}
       className={({ isActive }) =>
-        `px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+        `px-3 py-1.5 rounded text-sm transition-colors ${
           isActive
-            ? "bg-amber-100 text-amber-900"
-            : "text-stone-600 hover:bg-stone-100 hover:text-stone-900"
+            ? "bg-amber-800 text-amber-100"
+            : "text-stone-300 hover:text-amber-100 hover:bg-stone-700"
         }`
       }
     >
@@ -25,9 +25,9 @@ function NavItem({ to, children }) {
 export default function App() {
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="bg-white border-b border-stone-200 sticky top-0 z-10">
+      <header className="bg-stone-900 border-b border-stone-800 sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-6">
-          <span className="font-semibold text-lg tracking-tight text-amber-800">
+          <span className="font-semibold text-base tracking-wide text-amber-200 italic">
             Bookshelf
           </span>
           <nav className="flex items-center gap-1">

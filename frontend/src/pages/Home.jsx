@@ -24,8 +24,8 @@ export default function Home() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Your library</h1>
-        <p className="text-stone-500 text-sm mt-1">
+        <h1 className="text-3xl font-semibold tracking-tight text-stone-900">Your library</h1>
+        <p className="text-stone-500 text-sm mt-2">
           {shelves.length} {shelves.length === 1 ? 'shelf' : 'shelves'} &middot; {totalBooks} books
           {reviewCount > 0 && (
             <>
@@ -38,7 +38,6 @@ export default function Home() {
         </p>
       </div>
 
-      {/* Quick links */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { to: '/shelves', label: 'Shelves', desc: `${shelves.length} shelves` },
@@ -49,35 +48,34 @@ export default function Home() {
           <Link
             key={label}
             to={to}
-            className={`rounded-xl border p-4 flex flex-col gap-1 transition-colors hover:shadow-sm ${
+            className={`rounded-xl border p-4 flex flex-col gap-1 transition-all hover:shadow-sm ${
               warn
                 ? 'border-amber-200 bg-amber-50 hover:bg-amber-100'
-                : 'border-stone-200 bg-white hover:bg-stone-50'
+                : 'border-parchment-200 bg-white hover:bg-parchment-50'
             }`}
           >
-            <span className="font-medium text-sm">{label}</span>
+            <span className="font-medium text-sm text-stone-800">{label}</span>
             <span className="text-xs text-stone-500">{desc}</span>
           </Link>
         ))}
       </div>
 
-      {/* Shelves with mini spine previews */}
       {shelves.length > 0 && (
         <div>
-          <h2 className="font-medium text-sm text-stone-500 uppercase tracking-wide mb-3">Your shelves</h2>
+          <h2 className="font-medium text-xs text-stone-400 uppercase tracking-widest mb-4">Your shelves</h2>
           <div className="space-y-3">
             {shelves.map((shelf) => (
               <Link
                 key={shelf.id}
                 to={`/shelves/${shelf.id}`}
-                className="block rounded-xl border border-stone-200 bg-white hover:shadow-md transition-shadow overflow-hidden"
+                className="block rounded-xl border border-parchment-200 bg-white hover:shadow-md transition-shadow overflow-hidden"
               >
                 <div className="bg-stone-900 px-4 pt-4">
                   <MiniShelfPreview shelfId={shelf.id} bookCount={shelf.book_count} height={72} />
                 </div>
                 <div className="px-4 py-3 flex items-center justify-between">
                   <div>
-                    <span className="font-medium text-sm">{shelf.label}</span>
+                    <span className="font-medium text-sm text-stone-800">{shelf.label}</span>
                     <span className="text-xs text-stone-400 ml-3">{shelf.book_count} books</span>
                     {shelf.needs_review_count > 0 && (
                       <span className="text-xs text-amber-700 ml-2">{shelf.needs_review_count} to review</span>
@@ -92,9 +90,9 @@ export default function Home() {
       )}
 
       {shelves.length === 0 && (
-        <div className="text-center py-16 text-stone-400">
+        <div className="text-center py-16">
           <p className="font-medium text-stone-600">No shelves yet</p>
-          <p className="text-sm mt-1">
+          <p className="text-sm mt-1 text-stone-400">
             Go to{' '}
             <Link to="/shelves" className="text-amber-700 hover:underline">
               Shelves

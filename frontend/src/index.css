@@ -4,12 +4,17 @@
 
 @layer base {
   body {
-    @apply bg-stone-50 text-stone-900;
+    font-family: 'Lora', Georgia, serif;
+    background-color: #faf6ee;
+    color: #1c1410;
+  }
+
+  h1, h2, h3 {
+    font-family: 'Lora', Georgia, serif;
   }
 }
 
 @layer utilities {
-  /* Fade in for modals / overlays */
   .animate-fade-in {
     animation: fadeIn 0.15s ease-out;
   }
