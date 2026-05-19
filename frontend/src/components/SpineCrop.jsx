@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-export default function SpineCrop({ photoUrl, bbox, width = 52, height = 110 }) {
+export default function SpineCrop({ photoUrl, bbox, width = 52, height = 110, onClick }) {
   const [nat, setNat] = useState(null);
   const [x, y, w, h] = bbox;
 
@@ -25,7 +25,8 @@ export default function SpineCrop({ photoUrl, bbox, width = 52, height = 110 }) 
 
   return (
     <div
-      style={{ width, height, borderRadius: 4, flexShrink: 0, ...divStyle }}
+      onClick={onClick}
+      style={{ width, height, borderRadius: 4, flexShrink: 0, cursor: onClick ? "zoom-in" : "default", ...divStyle }}
       className="bg-stone-200"
     />
   );

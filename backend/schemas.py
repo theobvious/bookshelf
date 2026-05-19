@@ -41,10 +41,10 @@ class BookUpdate(BaseModel):
 class BookOut(BookBase):
     id: int
     created_at: datetime
-    # Position within a shelf context (populated when returned from shelf detail)
     shelf_row: int = 1
     position_in_row: int = 0
     bbox: Optional[list] = None  # [x, y, w, h] fractions
+    shelf_photo_url: Optional[str] = None
 
     @field_validator("genres", mode="before")
     @classmethod

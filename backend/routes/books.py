@@ -17,12 +17,20 @@ router = APIRouter(prefix="/api/books", tags=["books"])
 def _book_to_out(book: Book, db: Session, context_shelf_id: Optional[int] = None) -> BookOut:
     shelf_row = 1
     position_in_row = 0
-    if context_shelf_id:
-        for sb in book.shelf_books:
-            if sb.shelf_id == context_shelf_id:
-                shelf_row = sb.shelf_row or 1
-                position_in_row = sb.position_in_row or 0
-                break
+    shelf_photo_url = None
+
+    for sb in book.shelf_books:
+        if context_shelf_id and sb.shelf_id == context_shelf_id:
+            shelf_row = sb.shelf_row or 1
+            position_in_row = sb.position_in_row or 0
+            shelf = db.get(Shelf, sb.shelf_id)
+            if shelf:
+                shelf_photo_url = shelf.photo_path
+            break
+        if not context_shelf_id and shelf_photo_url is None:
+            shelf = db.get(Shelf, sb.shelf_id)
+            if shelf and shelf.photo_path:
+                shelf_photo_url = shelf.photo_path
 
     genres = []
     if book.genres:
@@ -57,6 +65,7 @@ def _book_to_out(book: Book, db: Session, context_shelf_id: Optional[int] = None
         shelf_row=shelf_row,
         position_in_row=position_in_row,
         bbox=bbox,
+        shelf_photo_url=shelf_photo_url,
     )
 
 

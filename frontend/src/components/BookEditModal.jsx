@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { updateBook, enrichBook } from "../api.js";
 import SpineCrop from "./SpineCrop.jsx";
+import PhotoViewer from "./PhotoViewer.jsx";
 
 const LANGUAGES = [
   ["en", "English"], ["fr", "French"], ["de", "German"], ["es", "Spanish"],
@@ -23,6 +24,7 @@ export default function BookEditModal({ book, shelfPhotoUrl, onSave, onClose }) 
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [showViewer, setShowViewer] = useState(false);
 
   // Auto-enrich on open when reviewing a book that has a title but no author
   useEffect(() => {
@@ -80,12 +82,19 @@ export default function BookEditModal({ book, shelfPhotoUrl, onSave, onClose }) 
               {showPhotoSection && (
                 <div className="flex-shrink-0">
                   {hasBbox ? (
-                    <SpineCrop photoUrl={shelfPhotoUrl} bbox={book.bbox} width={52} height={110} />
+                    <SpineCrop
+                      photoUrl={shelfPhotoUrl}
+                      bbox={book.bbox}
+                      width={52}
+                      height={110}
+                      onClick={() => setShowViewer(true)}
+                    />
                   ) : (
                     <img
                       src={shelfPhotoUrl}
                       alt="shelf"
-                      style={{ width: 72, height: 110, objectFit: 'cover', objectPosition: 'center', borderRadius: 4 }}
+                      onClick={() => setShowViewer(true)}
+                      style={{ width: 72, height: 110, objectFit: 'cover', objectPosition: 'center', borderRadius: 4, cursor: 'zoom-in' }}
                     />
                   )}
                   <p className="text-xs text-amber-700 text-center mt-1">{hasBbox ? 'Spine' : 'Shelf'}</p>
@@ -158,6 +167,14 @@ export default function BookEditModal({ book, shelfPhotoUrl, onSave, onClose }) 
           </button>
         </div>
       </div>
+
+      {showViewer && shelfPhotoUrl && (
+        <PhotoViewer
+          photoUrl={shelfPhotoUrl}
+          bbox={hasBbox ? book.bbox : null}
+          onClose={() => setShowViewer(false)}
+        />
+      )}
     </div>
   );
 }

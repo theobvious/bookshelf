@@ -8,7 +8,7 @@ const LANG_NAMES = {
   da: "Danish", fi: "Finnish", no: "Norwegian", cs: "Czech", hu: "Hungarian",
 };
 
-export default function BookCard({ book, onUpdate, onDelete, showShelf, shelfLabels }) {
+export default function BookCard({ book, onUpdate, onDelete, showShelf, shelfLabels, shelfPhotoUrl }) {
   const [editing, setEditing] = useState(false);
 
   const langLabel = book.language ? (LANG_NAMES[book.language] || book.language.toUpperCase()) : null;
@@ -85,6 +85,7 @@ export default function BookCard({ book, onUpdate, onDelete, showShelf, shelfLab
       {editing && (
         <BookEditModal
           book={book}
+          shelfPhotoUrl={shelfPhotoUrl || book.shelf_photo_url}
           onSave={(updated) => { onUpdate(updated); setEditing(false); }}
           onClose={() => setEditing(false)}
         />
