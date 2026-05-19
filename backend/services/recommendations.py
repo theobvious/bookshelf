@@ -5,6 +5,7 @@ from typing import Optional
 import anthropic
 
 client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+async_client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
 RECOMMEND_PROMPT = """I have a bookshelf labeled "{label}" containing these books:
 
@@ -72,7 +73,7 @@ async def get_book_recommendations(book: dict) -> list:
     genres = ", ".join(book.get("genres") or []) or "Not specified"
     language = book.get("language") or "en"
 
-    message = client.messages.create(
+    message = await async_client.messages.create(
         model="claude-opus-4-7",
         max_tokens=1024,
         messages=[{

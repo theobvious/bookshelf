@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
-import { getShelf, deleteBook, getRecommendations } from '../api.js';
+import { getShelf, deleteBook, getShelfRecommendations } from '../api.js';
 import ShelfSpineView from '../components/ShelfSpineView.jsx';
 import BookCard from '../components/BookCard.jsx';
 import AddBookModal from '../components/AddBookModal.jsx';
@@ -49,7 +49,7 @@ export default function ShelfDetailPage() {
     setRecsLoading(true);
     setRecsError(null);
     try {
-      setRecs(await getRecommendations(id));
+      setRecs(await getShelfRecommendations(id));
     } catch (e) {
       setRecsError(e.message);
     } finally {
