@@ -1,3 +1,4 @@
+from typing import Optional
 import httpx
 
 OPEN_LIBRARY_SEARCH = "https://openlibrary.org/search.json"
@@ -5,16 +6,14 @@ OPEN_LIBRARY_COVER = "https://covers.openlibrary.org/b/id/{}-M.jpg"
 GOOGLE_BOOKS_SEARCH = "https://www.googleapis.com/books/v1/volumes"
 
 
-async def enrich_book(title: str | None, author: str | None, language: str | None) -> dict:
+async def enrich_book(title: Optional[str], author: Optional[str], language: Optional[str]) -> dict:
     """Fetch additional metadata from Open Library, falling back to Google Books."""
     if not title:
         return {}
 
     result = await _try_open_library(title, author, language)
     if not result.get("cover_url") and not result.get("isbn"):
-        # Try Google Books as fallback for better coverage
         google = await _try_google_books(title, author)
-        # Merge: prefer Open Library data, fill gaps with Google Books
         for key, val in google.items():
             if not result.get(key):
                 result[key] = val
@@ -22,7 +21,7 @@ async def enrich_book(title: str | None, author: str | None, language: str | Non
     return result
 
 
-async def _try_open_library(title: str, author: str | None, language: str | None) -> dict:
+async def _try_open_library(title: str, author: Optional[str], language: Optional[str]) -> dict:
     query = title
     if author:
         query += f" {author}"
@@ -60,7 +59,7 @@ async def _try_open_library(title: str, author: str | None, language: str | None
         return {}
 
 
-async def _try_google_books(title: str, author: str | None) -> dict:
+async def _try_google_books(title: str, author: Optional[str]) -> dict:
     query = f'intitle:"{title}"'
     if author:
         query += f' inauthor:"{author}"'
@@ -98,8 +97,7 @@ async def _try_google_books(title: str, author: str | None) -> dict:
         return {}
 
 
-def _best_match(docs: list[dict], title: str, author: str | None) -> dict | None:
-    """Pick the doc whose title most closely matches."""
+def _best_match(docs: list, title: str, author: Optional[str]) -> Optional[dict]:
     title_lower = title.lower()
     for doc in docs:
         doc_title = (doc.get("title") or "").lower()
