@@ -5,13 +5,14 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from auth import require_auth
 from database import get_db
 from models import Book, Recommendation, Shelf
 from schemas import RecommendationOut, RecommendationUpdate, RecommendationsOut
 from services.enrichment import enrich_book
 from services.recommendations import get_book_recommendations, get_recommendations as get_shelf_recommendations
 
-router = APIRouter(tags=["recommendations"])
+router = APIRouter(tags=["recommendations"], dependencies=[Depends(require_auth)])
 
 
 # ── Shelf-level endpoint ─────────────────────────────────────────────────────

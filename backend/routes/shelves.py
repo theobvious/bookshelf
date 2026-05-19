@@ -7,16 +7,17 @@ from typing import Optional
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from sqlalchemy.orm import Session, selectinload
 
+from auth import require_auth
 from database import get_db
 from models import Book, Shelf, ShelfBook
 from routes.books import _book_to_out
 from schemas import BookOut, ExtractionResult, ShelfDetailOut, ShelfOut
 from services import enrichment, vision
 
-UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "uploads")
+UPLOAD_DIR = os.environ.get("UPLOAD_DIR", os.path.join(os.path.dirname(__file__), "..", "uploads"))
 ENRICH_CONCURRENCY = 12  # max simultaneous Open Library / Google Books calls
 
-router = APIRouter(prefix="/api/shelves", tags=["shelves"])
+router = APIRouter(prefix="/api/shelves", tags=["shelves"], dependencies=[Depends(require_auth)])
 
 
 def _load_shelf(db: Session, shelf_id: int) -> Optional[Shelf]:

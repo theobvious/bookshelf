@@ -1,7 +1,21 @@
-const BASE = "/api";
+const BACKEND = import.meta.env.VITE_BACKEND_URL ?? "";
+const BASE = `${BACKEND}/api`;
+
+function getToken() {
+  return localStorage.getItem("bookshelf_token");
+}
 
 async function request(path, options = {}) {
-  const res = await fetch(`${BASE}${path}`, options);
+  const token = getToken();
+  const headers = { ...(options.headers ?? {}) };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  const res = await fetch(`${BASE}${path}`, { ...options, headers });
+  if (res.status === 401) {
+    localStorage.removeItem("bookshelf_token");
+    localStorage.removeItem("bookshelf_user");
+    window.location.href = "/login";
+    return;
+  }
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
     throw new Error(err.detail || "Request failed");
@@ -9,6 +23,19 @@ async function request(path, options = {}) {
   if (res.status === 204) return null;
   return res.json();
 }
+
+export const googleAuth = (credential) =>
+  fetch(`${BASE}/auth/google`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ credential }),
+  }).then(async (res) => {
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new Error(err.detail || "Auth failed");
+    }
+    return res.json();
+  });
 
 // Shelves
 export const getShelves = () => request("/shelves/");

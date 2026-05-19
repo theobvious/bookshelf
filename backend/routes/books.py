@@ -6,12 +6,13 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from auth import require_auth
 from database import get_db
 from models import Book, Shelf, ShelfBook
 from schemas import BookCreate, BookOut, BookUpdate, SearchResult, ShelfLocation, ShelfOut
 from services import enrichment
 
-router = APIRouter(prefix="/api/books", tags=["books"])
+router = APIRouter(prefix="/api/books", tags=["books"], dependencies=[Depends(require_auth)])
 
 
 def _book_to_out(book: Book, db: Session, context_shelf_id: Optional[int] = None) -> BookOut:
