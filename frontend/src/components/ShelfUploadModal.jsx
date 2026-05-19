@@ -87,7 +87,6 @@ export default function ShelfUploadModal({ onCreated, onClose }) {
               </div>
             ) : (
               <div className="py-12 text-center">
-                <div className="text-3xl mb-2">📷</div>
                 <p className="text-sm text-stone-500">Drop a shelf photo here, or click to choose</p>
                 <p className="text-xs text-stone-400 mt-1">JPG, PNG, WEBP — Claude will read the spines</p>
               </div>

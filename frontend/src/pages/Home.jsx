@@ -41,11 +41,11 @@ export default function Home() {
       {/* Quick links */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { to: '/shelves', icon: '🗂️', label: 'Shelves', desc: `${shelves.length} shelves` },
-          { to: '/search', icon: '🔍', label: 'Search', desc: 'Find a book' },
-          { to: '/review', icon: '✏️', label: 'Review queue', desc: `${reviewCount} to review`, warn: reviewCount > 0 },
-          { to: '/shelves', icon: '📷', label: 'Add shelf', desc: 'Upload a photo' },
-        ].map(({ to, icon, label, desc, warn }) => (
+          { to: '/shelves', label: 'Shelves', desc: `${shelves.length} shelves` },
+          { to: '/search', label: 'Search', desc: 'Find a book' },
+          { to: '/review', label: 'Review queue', desc: `${reviewCount} to review`, warn: reviewCount > 0 },
+          { to: '/shelves', label: 'Add shelf', desc: 'Upload a photo' },
+        ].map(({ to, label, desc, warn }) => (
           <Link
             key={label}
             to={to}
@@ -55,7 +55,6 @@ export default function Home() {
                 : 'border-stone-200 bg-white hover:bg-stone-50'
             }`}
           >
-            <span className="text-2xl">{icon}</span>
             <span className="font-medium text-sm">{label}</span>
             <span className="text-xs text-stone-500">{desc}</span>
           </Link>
@@ -84,7 +83,7 @@ export default function Home() {
                       <span className="text-xs text-amber-700 ml-2">{shelf.needs_review_count} to review</span>
                     )}
                   </div>
-                  <span className="text-stone-300 text-sm">→</span>
+                  <span className="text-stone-300 text-sm">&#8250;</span>
                 </div>
               </Link>
             ))}
@@ -94,7 +93,6 @@ export default function Home() {
 
       {shelves.length === 0 && (
         <div className="text-center py-16 text-stone-400">
-          <div className="text-5xl mb-3">📚</div>
           <p className="font-medium text-stone-600">No shelves yet</p>
           <p className="text-sm mt-1">
             Go to{' '}

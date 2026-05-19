@@ -1,15 +1,14 @@
-import { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
-import { searchBooks } from "../api.js";
+import { useState, useEffect, useRef } from 'react';
+import { searchBooks } from '../api.js';
 
 const LANG_NAMES = {
-  en: "English", fr: "French", de: "German", es: "Spanish", it: "Italian",
-  pt: "Portuguese", nl: "Dutch", ru: "Russian", ja: "Japanese", zh: "Chinese",
-  ko: "Korean", ar: "Arabic", he: "Hebrew", pl: "Polish",
+  en: 'English', fr: 'French', de: 'German', es: 'Spanish', it: 'Italian',
+  pt: 'Portuguese', nl: 'Dutch', ru: 'Russian', ja: 'Japanese', zh: 'Chinese',
+  ko: 'Korean', ar: 'Arabic', he: 'Hebrew', pl: 'Polish',
 };
 
 export default function SearchPage() {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
@@ -57,7 +56,7 @@ export default function SearchPage() {
         )}
         {!loading && query && (
           <button
-            onClick={() => setQuery("")}
+            onClick={() => setQuery('')}
             className="absolute right-3 top-3 text-stone-400 hover:text-stone-600 text-lg leading-none"
           >
             &times;
@@ -67,13 +66,13 @@ export default function SearchPage() {
 
       {searched && results.length === 0 && (
         <p className="text-sm text-stone-400 text-center py-8">
-          No books found for "{query}".
+          No books found for &ldquo;{query}&rdquo;.
         </p>
       )}
 
       {results.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs text-stone-400">{results.length} result{results.length !== 1 ? "s" : ""}</p>
+          <p className="text-xs text-stone-400">{results.length} result{results.length !== 1 ? 's' : ''}</p>
           {results.map(({ book, shelf_labels }) => {
             const lang = book.language && LANG_NAMES[book.language];
             return (
@@ -85,7 +84,7 @@ export default function SearchPage() {
                   {book.cover_url ? (
                     <img src={book.cover_url} alt="" className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-stone-300 text-xl">📖</div>
+                    <div className="w-full h-full bg-stone-200" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -94,14 +93,14 @@ export default function SearchPage() {
                   </p>
                   {book.author && <p className="text-xs text-stone-500">{book.author}</p>}
                   <div className="flex flex-wrap items-center gap-1 mt-1">
-                    {lang && lang !== "English" && (
+                    {lang && lang !== 'English' && (
                       <span className="text-xs px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-100">
                         {lang}
                       </span>
                     )}
                     {shelf_labels.length > 0 && (
                       <span className="text-xs text-stone-400">
-                        📚 {shelf_labels.join(", ")}
+                        {shelf_labels.join(', ')}
                       </span>
                     )}
                     {book.needs_review && (
@@ -119,7 +118,6 @@ export default function SearchPage() {
 
       {!searched && !query && (
         <div className="text-center py-16 text-stone-400">
-          <div className="text-4xl mb-2">🔍</div>
           <p className="text-sm">Type to search your catalog</p>
           <p className="text-xs mt-1">Searches titles, original titles, and authors — in any language</p>
         </div>

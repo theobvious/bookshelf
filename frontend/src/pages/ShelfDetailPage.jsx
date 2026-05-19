@@ -10,7 +10,7 @@ export default function ShelfDetailPage() {
   const [shelf, setShelf] = useState(null);
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState('spines'); // 'spines' | 'list'
+  const [view, setView] = useState('spines');
   const [showAddBook, setShowAddBook] = useState(false);
   const [recs, setRecs] = useState(null);
   const [recsLoading, setRecsLoading] = useState(false);
@@ -64,7 +64,7 @@ export default function ShelfDetailPage() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <Link to="/shelves" className="text-xs text-stone-400 hover:text-stone-600">
-            ← Shelves
+            &larr; Shelves
           </Link>
           <h1 className="text-xl font-semibold mt-0.5">{shelf.label}</h1>
           <p className="text-sm text-stone-500 mt-1">
@@ -75,7 +75,6 @@ export default function ShelfDetailPage() {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
-          {/* View toggle */}
           <div className="flex rounded-lg border border-stone-200 overflow-hidden text-xs">
             <button
               onClick={() => setView('spines')}
@@ -117,7 +116,7 @@ export default function ShelfDetailPage() {
           disabled={recsLoading || confirmed.length === 0}
           className="text-xs px-3 py-1.5 rounded-lg bg-amber-100 text-amber-800 hover:bg-amber-200 disabled:opacity-50"
         >
-          {recsLoading ? 'Thinking…' : '✨ Recommend books'}
+          {recsLoading ? 'Thinking…' : 'Recommend books'}
         </button>
       </div>
 
@@ -165,7 +164,7 @@ export default function ShelfDetailPage() {
       {/* Recommendations */}
       {(recs || recsError) && (
         <div className="rounded-xl border border-stone-200 bg-white p-5">
-          <h2 className="font-semibold text-base mb-1">📖 Book recommendations</h2>
+          <h2 className="font-semibold text-base mb-1">Book recommendations</h2>
           {recsError && <p className="text-sm text-red-600">{recsError}</p>}
           {recs && (
             <>

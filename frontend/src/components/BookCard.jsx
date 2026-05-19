@@ -27,7 +27,7 @@ export default function BookCard({ book, onUpdate, onDelete, showShelf, shelfLab
           {book.cover_url ? (
             <img src={book.cover_url} alt="" className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-stone-300 text-xl">📖</div>
+            <div className="w-full h-full bg-stone-200" />
           )}
         </div>
 

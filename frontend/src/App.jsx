@@ -1,4 +1,4 @@
-import { Routes, Route, NavLink, useLocation } from "react-router-dom";
+import { Routes, Route, NavLink } from "react-router-dom";
 import Home from "./pages/Home.jsx";
 import ShelvesPage from "./pages/ShelvesPage.jsx";
 import ShelfDetailPage from "./pages/ShelfDetailPage.jsx";
@@ -28,7 +28,7 @@ export default function App() {
       <header className="bg-white border-b border-stone-200 sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-6">
           <span className="font-semibold text-lg tracking-tight text-amber-800">
-            📚 Bookshelf
+            Bookshelf
           </span>
           <nav className="flex items-center gap-1">
             <NavItem to="/">Home</NavItem>

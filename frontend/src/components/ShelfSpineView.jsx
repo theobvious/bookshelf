@@ -145,9 +145,7 @@ function BookPopover({ book, anchorX, anchorY, onClose, onUpdate, onDelete }) {
               className="w-12 h-16 object-cover rounded flex-shrink-0 shadow-sm"
             />
           ) : (
-            <div className="w-12 h-16 rounded flex-shrink-0 bg-stone-100 flex items-center justify-center text-xl">
-              📖
-            </div>
+            <div className="w-12 h-16 rounded flex-shrink-0 bg-stone-200" />
           )}
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-sm leading-snug">

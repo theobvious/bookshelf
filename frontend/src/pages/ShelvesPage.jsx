@@ -40,7 +40,6 @@ export default function ShelvesPage() {
 
       {shelves.length === 0 ? (
         <div className="text-center py-16 text-stone-400">
-          <div className="text-5xl mb-3">📷</div>
           <p className="font-medium text-stone-600">No shelves yet</p>
           <p className="text-sm mt-1">Upload a photo of your bookshelf to get started.</p>
           <button
@@ -58,7 +57,6 @@ export default function ShelvesPage() {
               to={`/shelves/${shelf.id}`}
               className="group rounded-xl border border-stone-200 bg-white overflow-hidden hover:shadow-md transition-shadow"
             >
-              {/* Mini spine preview */}
               <div className="bg-stone-900 px-3 pt-3">
                 <MiniShelfPreview shelfId={shelf.id} bookCount={shelf.book_count} height={64} />
               </div>
