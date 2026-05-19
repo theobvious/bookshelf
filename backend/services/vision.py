@@ -58,6 +58,23 @@ def _resize_for_upload(image_path: str) -> tuple[bytes, str]:
     return buf.getvalue(), "image/jpeg"
 
 
+def _parse_json_array(text: str) -> list:
+    """Parse a JSON array, recovering partial results if the response was truncated."""
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        # Response was cut off mid-stream — salvage every complete object
+        # by finding the last '}' and closing the array there.
+        last_brace = text.rfind("}")
+        if last_brace == -1:
+            return []
+        truncated = text[: last_brace + 1] + "]"
+        try:
+            return json.loads(truncated)
+        except json.JSONDecodeError:
+            return []
+
+
 def extract_books_from_image(image_path: str) -> list[dict]:
     """Send shelf photo to Claude and return extracted book data."""
     image_bytes, media_type = _resize_for_upload(image_path)
@@ -65,7 +82,7 @@ def extract_books_from_image(image_path: str) -> list[dict]:
 
     message = client.messages.create(
         model="claude-opus-4-7",
-        max_tokens=4096,
+        max_tokens=8096,
         messages=[
             {
                 "role": "user",
@@ -91,7 +108,7 @@ def extract_books_from_image(image_path: str) -> list[dict]:
         lines = response_text.splitlines()
         response_text = "\n".join(lines[1:-1] if lines[-1].startswith("```") else lines[1:])
 
-    books = json.loads(response_text)
+    books = _parse_json_array(response_text)
 
     # Normalise fields
     for book in books:
