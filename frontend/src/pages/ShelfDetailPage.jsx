@@ -28,7 +28,10 @@ export default function ShelfDetailPage() {
   }, [id]);
 
   function handleBookUpdated(updated) {
-    setBooks((prev) => prev.map((b) => (b.id === updated.id ? updated : b)));
+    setBooks((prev) => prev.map((b) => {
+      if (b.id !== updated.id) return b;
+      return { ...updated, shelf_row: b.shelf_row, position_in_row: b.position_in_row };
+    }));
   }
 
   async function handleBookDeleted(bookId) {
