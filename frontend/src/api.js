@@ -40,6 +40,7 @@ export const updateBook = (id, data) =>
   request(`/books/${id}/`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
 
 export const confirmBook = (id) => request(`/books/${id}/confirm/`, { method: "POST" });
+export const enrichBook = (id) => request(`/books/${id}/enrich/`, { method: "POST" });
 
 export const deleteBook = (id) => request(`/books/${id}/`, { method: "DELETE" });
 

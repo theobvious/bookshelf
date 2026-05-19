@@ -4,7 +4,7 @@ export default function SpineCrop({ photoUrl, bbox, width = 52, height = 110 }) 
   const [nat, setNat] = useState(null);
   const [x, y, w, h] = bbox;
 
-  let imgStyle = { display: "none" };
+  let imgStyle = { position: "absolute", opacity: 0 };
   if (nat) {
     const scale = width / (w * nat.w);
     imgStyle = {
@@ -13,6 +13,7 @@ export default function SpineCrop({ photoUrl, bbox, width = 52, height = 110 }) 
       height: nat.h * scale,
       left: -x * nat.w * scale,
       top: -y * nat.h * scale,
+      opacity: 1,
     };
   }
 

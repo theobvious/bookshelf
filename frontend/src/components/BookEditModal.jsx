@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { updateBook } from "../api.js";
+import { useState, useEffect } from "react";
+import { updateBook, enrichBook } from "../api.js";
 import SpineCrop from "./SpineCrop.jsx";
 
 const LANGUAGES = [
@@ -23,6 +23,16 @@ export default function BookEditModal({ book, shelfPhotoUrl, onSave, onClose }) 
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+
+  // Auto-enrich on open when reviewing a book that has a title but no author
+  useEffect(() => {
+    if (!book.needs_review || !book.title || book.author) return;
+    enrichBook(book.id).then((enriched) => {
+      if (enriched.author) setForm((f) => ({ ...f, author: f.author || enriched.author }));
+      if (enriched.isbn && !form.isbn) setForm((f) => ({ ...f, isbn: f.isbn || enriched.isbn }));
+    }).catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function set(field, value) {
     setForm((f) => ({ ...f, [field]: value }));

@@ -1,3 +1,4 @@
+import asyncio
 import json
 from typing import Optional
 
@@ -8,6 +9,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models import Book, Shelf, ShelfBook
 from schemas import BookCreate, BookOut, BookUpdate, SearchResult, ShelfLocation, ShelfOut
+from services import enrichment
 
 router = APIRouter(prefix="/api/books", tags=["books"])
 
@@ -184,3 +186,29 @@ def delete_book(book_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Book not found")
     db.delete(book)
     db.commit()
+
+
+@router.post("/{book_id}/enrich", response_model=BookOut)
+async def enrich_book(book_id: int, db: Session = Depends(get_db)):
+    book = db.get(Book, book_id)
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+    if not book.title:
+        return _book_to_out(book, db)
+
+    meta = await enrichment.enrich_book(book.title, book.author, book.language)
+
+    if not book.author and meta.get("author"):
+        book.author = meta["author"]
+    if not book.isbn and meta.get("isbn"):
+        book.isbn = meta["isbn"]
+    if not book.cover_url and meta.get("cover_url"):
+        book.cover_url = meta["cover_url"]
+    if not book.description and meta.get("description"):
+        book.description = meta["description"]
+    if not book.genres and meta.get("genres"):
+        book.genres = json.dumps(meta["genres"])
+
+    db.commit()
+    db.refresh(book)
+    return _book_to_out(book, db)
