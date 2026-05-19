@@ -14,8 +14,15 @@ const LANG_NAMES = {
 export default function ShelfSpineView({ books, onUpdate, onDelete }) {
   const [selected, setSelected] = useState(null);
   const [anchor, setAnchor] = useState(null);
+  const [reviewing, setReviewing] = useState(null); // book opened straight to edit
 
   function handleSpineClick(book, e) {
+    if (book.needs_review) {
+      setSelected(null);
+      setAnchor(null);
+      setReviewing(book);
+      return;
+    }
     if (selected?.id === book.id) {
       setSelected(null);
       setAnchor(null);
@@ -80,6 +87,14 @@ export default function ShelfSpineView({ books, onUpdate, onDelete }) {
           onClose={handleClose}
           onUpdate={(updated) => { onUpdate(updated); handleClose(); }}
           onDelete={(id) => { onDelete(id); handleClose(); }}
+        />
+      )}
+
+      {reviewing && (
+        <BookEditModal
+          book={reviewing}
+          onSave={(updated) => { onUpdate(updated); setReviewing(null); }}
+          onClose={() => setReviewing(null)}
         />
       )}
     </div>
