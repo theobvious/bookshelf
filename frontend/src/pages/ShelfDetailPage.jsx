@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { getShelf, deleteBook, getRecommendations } from '../api.js';
 import ShelfSpineView from '../components/ShelfSpineView.jsx';
 import BookCard from '../components/BookCard.jsx';
@@ -7,6 +7,8 @@ import AddBookModal from '../components/AddBookModal.jsx';
 
 export default function ShelfDetailPage() {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const highlightBookId = searchParams.get('highlight') ? parseInt(searchParams.get('highlight')) : null;
   const [shelf, setShelf] = useState(null);
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -99,6 +101,8 @@ export default function ShelfDetailPage() {
             books={books}
             onUpdate={handleBookUpdated}
             onDelete={handleBookDeleted}
+            shelfPhotoUrl={shelf.photo_path}
+            highlightBookId={highlightBookId}
           />
         </div>
       )}

@@ -1,6 +1,6 @@
 import { spineColor, spineWidth } from './spineUtils.js';
 
-export default function BookSpine({ book, onClick, selected, height = 180 }) {
+export default function BookSpine({ book, onClick, selected, highlighted, height = 180 }) {
   const color = spineColor(book);
   const width = spineWidth(book);
   const unreviewed = book.needs_review;
@@ -19,7 +19,9 @@ export default function BookSpine({ book, onClick, selected, height = 180 }) {
         cursor: onClick ? 'pointer' : 'default',
         transition: 'transform 0.12s ease, box-shadow 0.12s ease',
         transform: selected ? 'translateY(-10px)' : undefined,
-        boxShadow: selected
+        boxShadow: highlighted
+          ? '0 0 0 2px #f59e0b, 0 0 12px rgba(245,158,11,0.6)'
+          : selected
           ? '2px -6px 16px rgba(0,0,0,0.45)'
           : '1px 0 3px rgba(0,0,0,0.25)',
         ...(unreviewed && {

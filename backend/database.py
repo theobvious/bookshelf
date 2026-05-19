@@ -55,4 +55,14 @@ def init_db():
                 VALUES ('delete', old.id, COALESCE(old.title,''), COALESCE(old.original_title,''), COALESCE(old.author,''));
             END
         """))
+        # Migrations: add new columns if they don't exist yet
+        for stmt in [
+            "ALTER TABLE books ADD COLUMN bbox TEXT",
+            "ALTER TABLE shelf_books ADD COLUMN shelf_row INTEGER DEFAULT 1",
+            "ALTER TABLE shelf_books ADD COLUMN position_in_row INTEGER DEFAULT 0",
+        ]:
+            try:
+                conn.execute(text(stmt))
+            except Exception:
+                pass  # column already exists
         conn.commit()

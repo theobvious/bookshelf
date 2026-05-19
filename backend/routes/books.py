@@ -7,19 +7,34 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from models import Book, Shelf, ShelfBook
-from schemas import BookCreate, BookOut, BookUpdate, SearchResult, ShelfOut
+from schemas import BookCreate, BookOut, BookUpdate, SearchResult, ShelfLocation, ShelfOut
 
 router = APIRouter(prefix="/api/books", tags=["books"])
 
 
-def _book_to_out(book: Book, db: Session) -> BookOut:
-    shelf_ids = [sb.shelf_id for sb in book.shelf_books]
+def _book_to_out(book: Book, db: Session, context_shelf_id: Optional[int] = None) -> BookOut:
+    shelf_row = 1
+    position_in_row = 0
+    if context_shelf_id:
+        for sb in book.shelf_books:
+            if sb.shelf_id == context_shelf_id:
+                shelf_row = sb.shelf_row or 1
+                position_in_row = sb.position_in_row or 0
+                break
+
     genres = []
     if book.genres:
         try:
             genres = json.loads(book.genres)
         except Exception:
             genres = []
+
+    bbox = None
+    if book.bbox:
+        try:
+            bbox = json.loads(book.bbox)
+        except Exception:
+            bbox = None
 
     return BookOut(
         id=book.id,
@@ -36,7 +51,9 @@ def _book_to_out(book: Book, db: Session) -> BookOut:
         review_notes=book.review_notes,
         source=book.source,
         created_at=book.created_at,
-        shelf_ids=shelf_ids,
+        shelf_row=shelf_row,
+        position_in_row=position_in_row,
+        bbox=bbox,
     )
 
 
@@ -60,7 +77,6 @@ def search_books(q: str, db: Session = Depends(get_db)):
     if not q.strip():
         return []
 
-    # FTS5 search
     rows = db.execute(
         text("SELECT rowid FROM books_fts WHERE books_fts MATCH :q ORDER BY rank LIMIT 50"),
         {"q": q.strip() + "*"},
@@ -71,12 +87,25 @@ def search_books(q: str, db: Session = Depends(get_db)):
         book = db.get(Book, book_id)
         if not book:
             continue
-        shelf_labels = [
-            db.get(Shelf, sb.shelf_id).label
-            for sb in book.shelf_books
-            if db.get(Shelf, sb.shelf_id)
-        ]
-        results.append(SearchResult(book=_book_to_out(book, db), shelf_labels=shelf_labels))
+
+        locations = []
+        shelf_labels = []
+        for sb in book.shelf_books:
+            shelf = db.get(Shelf, sb.shelf_id)
+            if shelf:
+                shelf_labels.append(shelf.label)
+                locations.append(ShelfLocation(
+                    shelf_id=sb.shelf_id,
+                    shelf_label=shelf.label,
+                    shelf_row=sb.shelf_row or 1,
+                    position_in_row=sb.position_in_row or 0,
+                ))
+
+        results.append(SearchResult(
+            book=_book_to_out(book, db),
+            shelf_labels=shelf_labels,
+            locations=locations,
+        ))
 
     return results
 
@@ -138,7 +167,6 @@ def update_book(book_id: int, payload: BookUpdate, db: Session = Depends(get_db)
 
 @router.post("/{book_id}/confirm", response_model=BookOut)
 def confirm_book(book_id: int, db: Session = Depends(get_db)):
-    """Mark a needs_review book as confirmed."""
     book = db.get(Book, book_id)
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")

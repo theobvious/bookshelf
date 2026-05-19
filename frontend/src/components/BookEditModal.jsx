@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { updateBook } from "../api.js";
+import SpineCrop from "./SpineCrop.jsx";
 
 const LANGUAGES = [
   ["en", "English"], ["fr", "French"], ["de", "German"], ["es", "Spanish"],
@@ -12,7 +13,7 @@ const LANGUAGES = [
 
 const inputClass = "w-full px-3 py-2 text-sm border border-parchment-200 rounded-lg bg-parchment-50 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:bg-white transition-colors";
 
-export default function BookEditModal({ book, onSave, onClose }) {
+export default function BookEditModal({ book, shelfPhotoUrl, onSave, onClose }) {
   const [form, setForm] = useState({
     title: book.title || "",
     original_title: book.original_title || "",
@@ -39,14 +40,15 @@ export default function BookEditModal({ book, onSave, onClose }) {
         isbn: form.isbn || null,
         ...(book.needs_review && form.title ? { needs_review: false } : {}),
       };
-      const updated = await updateBook(book.id, payload);
-      onSave(updated);
+      onSave(await updateBook(book.id, payload));
     } catch (e) {
       setError(e.message);
     } finally {
       setSaving(false);
     }
   }
+
+  const showCrop = shelfPhotoUrl && book.bbox && book.bbox.length === 4;
 
   return (
     <div
@@ -63,12 +65,28 @@ export default function BookEditModal({ book, onSave, onClose }) {
 
         {book.needs_review && (
           <div className="mb-4 p-3 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-800">
-            <strong>Claude couldn't read this spine clearly.</strong>
-            {book.review_notes && <p className="mt-1 italic">{book.review_notes}</p>}
-            {book.confidence != null && (
-              <p className="mt-1 text-xs">Confidence: {Math.round(book.confidence * 100)}%</p>
-            )}
+            <div className="flex gap-3 items-start">
+              {showCrop && (
+                <div className="flex-shrink-0">
+                  <SpineCrop photoUrl={shelfPhotoUrl} bbox={book.bbox} width={52} height={110} />
+                  <p className="text-xs text-amber-700 text-center mt-1">Spine</p>
+                </div>
+              )}
+              <div>
+                <strong>Couldn't read this spine clearly.</strong>
+                {book.review_notes && <p className="mt-1 italic">{book.review_notes}</p>}
+                {book.confidence != null && (
+                  <p className="mt-1 text-xs">Confidence: {Math.round(book.confidence * 100)}%</p>
+                )}
+              </div>
+            </div>
           </div>
+        )}
+
+        {book.needs_review && (book.title || book.author) && (
+          <p className="text-xs text-stone-400 italic mb-3">
+            Fields pre-filled with Claude's best reading — correct anything that looks wrong.
+          </p>
         )}
 
         <div className="space-y-3">

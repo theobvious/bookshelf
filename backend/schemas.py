@@ -12,7 +12,7 @@ class BookBase(BaseModel):
     language: Optional[str] = "en"
     description: Optional[str] = None
     cover_url: Optional[str] = None
-    genres: Optional[list[str]] = None
+    genres: Optional[list] = None
     needs_review: bool = False
     confidence: Optional[float] = None
     review_notes: Optional[str] = None
@@ -31,7 +31,7 @@ class BookUpdate(BaseModel):
     language: Optional[str] = None
     description: Optional[str] = None
     cover_url: Optional[str] = None
-    genres: Optional[list[str]] = None
+    genres: Optional[list] = None
     needs_review: Optional[bool] = None
     confidence: Optional[float] = None
 
@@ -39,16 +39,29 @@ class BookUpdate(BaseModel):
 class BookOut(BookBase):
     id: int
     created_at: datetime
-    shelf_ids: list[int] = []
+    # Position within a shelf context (populated when returned from shelf detail)
+    shelf_row: int = 1
+    position_in_row: int = 0
+    bbox: Optional[list] = None  # [x, y, w, h] fractions
 
     @field_validator("genres", mode="before")
     @classmethod
-    def parse_genres(cls, v: Any) -> Optional[list[str]]:
+    def parse_genres(cls, v: Any) -> Optional[list]:
         if isinstance(v, str):
             try:
                 return json.loads(v)
             except Exception:
                 return []
+        return v
+
+    @field_validator("bbox", mode="before")
+    @classmethod
+    def parse_bbox(cls, v: Any) -> Optional[list]:
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except Exception:
+                return None
         return v
 
     model_config = {"from_attributes": True}
@@ -94,6 +107,14 @@ class RecommendationsOut(BaseModel):
     recommendations: list[RecommendationItem]
 
 
+class ShelfLocation(BaseModel):
+    shelf_id: int
+    shelf_label: str
+    shelf_row: int = 1
+    position_in_row: int = 0
+
+
 class SearchResult(BaseModel):
     book: BookOut
     shelf_labels: list[str]
+    locations: list[ShelfLocation] = []

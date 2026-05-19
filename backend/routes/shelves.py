@@ -44,7 +44,7 @@ def _shelf_to_out(shelf: Shelf, db: Session) -> ShelfOut:
 
 def _shelf_to_detail(shelf: Shelf, db: Session) -> ShelfDetailOut:
     base = _shelf_to_out(shelf, db)
-    books = [_book_to_out(sb.book, db) for sb in shelf.shelf_books if sb.book]
+    books = [_book_to_out(sb.book, db, context_shelf_id=shelf.id) for sb in shelf.shelf_books if sb.book]
     return ShelfDetailOut(**base.model_dump(), books=books)
 
 
@@ -107,6 +107,7 @@ async def create_shelf(
         metas = await asyncio.gather(*[enrich(r) for r in raw_books])
 
         for raw, meta in zip(raw_books, metas):
+            bbox = raw.get("bbox")
             book = Book(
                 title=raw.get("title"),
                 original_title=raw.get("original_title") or raw.get("title"),
@@ -119,13 +120,19 @@ async def create_shelf(
                 needs_review=raw.get("needs_review", False),
                 confidence=raw.get("confidence"),
                 review_notes=raw.get("notes"),
+                bbox=json.dumps(bbox) if bbox else None,
                 source="extracted",
             )
             db.add(book)
             db.flush()
-            db.add(ShelfBook(shelf_id=shelf.id, book_id=book.id))
+            db.add(ShelfBook(
+                shelf_id=shelf.id,
+                book_id=book.id,
+                shelf_row=raw.get("row", 1),
+                position_in_row=raw.get("position", 0),
+            ))
             db.flush()
-            extracted_books.append(_book_to_out(book, db))
+            extracted_books.append(_book_to_out(book, db, context_shelf_id=shelf.id))
 
     db.commit()
 
