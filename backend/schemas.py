@@ -109,6 +109,27 @@ class RecommendationsOut(BaseModel):
     recommendations: list[RecommendationItem]
 
 
+class RecommendationUpdate(BaseModel):
+    acquired: Optional[bool] = None
+    dismissed: Optional[bool] = None
+
+
+class RecommendationOut(BaseModel):
+    id: int
+    source_book_id: int
+    source_book_title: Optional[str] = None
+    source_book_author: Optional[str] = None
+    title: str
+    author: Optional[str] = None
+    reason: Optional[str] = None
+    cover_url: Optional[str] = None
+    isbn: Optional[str] = None
+    acquired: bool = False
+    dismissed: bool = False
+    created_at: datetime
+    model_config = {"from_attributes": True}
+
+
 class ShelfLocation(BaseModel):
     shelf_id: int
     shelf_label: str

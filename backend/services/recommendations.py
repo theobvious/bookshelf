@@ -1,5 +1,6 @@
 import json
 import os
+from typing import Optional
 
 import anthropic
 
@@ -39,6 +40,51 @@ def get_recommendations(shelf_label: str, books: list[dict]) -> dict:
         model="claude-opus-4-7",
         max_tokens=2048,
         messages=[{"role": "user", "content": RECOMMEND_PROMPT.format(label=shelf_label, book_list=book_list)}],
+    )
+
+    response_text = message.content[0].text.strip()
+    if response_text.startswith("```"):
+        lines = response_text.splitlines()
+        response_text = "\n".join(lines[1:-1] if lines[-1].startswith("```") else lines[1:])
+
+    return json.loads(response_text)
+
+
+BOOK_RECOMMEND_PROMPT = """I am looking for book recommendations similar to:
+
+Title: {title}
+Author: {author}
+Description: {description}
+Genres: {genres}
+Language: {language}
+
+Please recommend exactly 6 books that are similar to this one but NOT by the same author ({author}).
+Focus on thematic similarity, style, or subject matter.
+
+Return ONLY a JSON array with no prose or markdown fences:
+[{{"title":"...","author":"...","reason":"..."}}]"""
+
+
+async def get_book_recommendations(book: dict) -> list:
+    title = book.get("title") or "Unknown"
+    author = book.get("author") or "Unknown"
+    description = book.get("description") or "Not available"
+    genres = ", ".join(book.get("genres") or []) or "Not specified"
+    language = book.get("language") or "en"
+
+    message = client.messages.create(
+        model="claude-opus-4-7",
+        max_tokens=1024,
+        messages=[{
+            "role": "user",
+            "content": BOOK_RECOMMEND_PROMPT.format(
+                title=title,
+                author=author,
+                description=description,
+                genres=genres,
+                language=language,
+            )
+        }],
     )
 
     response_text = message.content[0].text.strip()

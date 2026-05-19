@@ -66,4 +66,18 @@ def init_db():
                 conn.execute(text(stmt))
             except Exception:
                 pass  # column already exists
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS recommendations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                source_book_id INTEGER NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+                title TEXT NOT NULL,
+                author TEXT,
+                reason TEXT,
+                cover_url TEXT,
+                isbn TEXT,
+                acquired BOOLEAN DEFAULT 0,
+                dismissed BOOLEAN DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        """))
         conn.commit()

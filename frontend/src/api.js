@@ -22,8 +22,22 @@ export async function createShelf(label, photoFile) {
   return request("/shelves/", { method: "POST", body: form });
 }
 
-export const getRecommendations = (shelfId) =>
+export const getShelfRecommendations = (shelfId) =>
   request(`/shelves/${shelfId}/recommendations/`);
+
+export const recommendBook = (id, regenerate = false) =>
+  request(`/books/${id}/recommend${regenerate ? '?regenerate=true' : ''}`, { method: 'POST' });
+
+export const getRecommendations = (params = {}) => {
+  const qs = new URLSearchParams(Object.entries(params).filter(([, v]) => v !== undefined && v !== null));
+  return request(`/recommendations/${qs.toString() ? '?' + qs : ''}`);
+};
+
+export const updateRecommendation = (id, data) =>
+  request(`/recommendations/${id}/`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+
+export const deleteRecommendation = (id) =>
+  request(`/recommendations/${id}/`, { method: 'DELETE' });
 
 // Books
 export const getBooks = (params = {}) => {

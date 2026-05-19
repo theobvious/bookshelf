@@ -4,6 +4,7 @@ import ShelvesPage from "./pages/ShelvesPage.jsx";
 import ShelfDetailPage from "./pages/ShelfDetailPage.jsx";
 import SearchPage from "./pages/SearchPage.jsx";
 import ReviewPage from "./pages/ReviewPage.jsx";
+import RecommendationsPage from "./pages/RecommendationsPage.jsx";
 
 function NavItem({ to, children }) {
   return (
@@ -35,6 +36,7 @@ export default function App() {
             <NavItem to="/shelves">Shelves</NavItem>
             <NavItem to="/search">Search</NavItem>
             <NavItem to="/review">Review Queue</NavItem>
+            <NavItem to="/recommendations">Reading List</NavItem>
           </nav>
         </div>
       </header>
@@ -46,6 +48,7 @@ export default function App() {
           <Route path="/shelves/:id" element={<ShelfDetailPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/review" element={<ReviewPage />} />
+          <Route path="/recommendations" element={<RecommendationsPage />} />
         </Routes>
       </main>
     </div>

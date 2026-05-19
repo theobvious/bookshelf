@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import BookSpine from './BookSpine.jsx';
 import BookEditModal from './BookEditModal.jsx';
-import { deleteBook, updateBook } from '../api.js';
+import { deleteBook, updateBook, recommendBook } from '../api.js';
 
 const LANG_NAMES = {
   en: 'English', fr: 'French', de: 'German', es: 'Spanish', it: 'Italian',
@@ -144,6 +145,8 @@ function BookPopover({ book, anchorX, anchorY, onClose, onUpdate, onDelete }) {
   const [editing, setEditing] = useState(false);
   const [lendMode, setLendMode] = useState(false);
   const [borrowerName, setBorrowerName] = useState('');
+  const [recommending, setRecommending] = useState(false);
+  const navigate = useNavigate();
   const ref = useRef(null);
   const [pos, setPos] = useState({ visibility: 'hidden', position: 'fixed' });
 
@@ -253,10 +256,25 @@ function BookPopover({ book, anchorX, anchorY, onClose, onUpdate, onDelete }) {
           </div>
         )}
 
-        <div className="flex gap-1.5 mt-3">
+        <div className="flex gap-1.5 mt-3 flex-wrap">
           <button onClick={() => setEditing(true)}
             className="flex-1 text-xs py-1.5 rounded-lg border border-parchment-200 hover:bg-parchment-50 font-medium">
             Edit
+          </button>
+          <button
+            disabled={recommending}
+            onClick={async () => {
+              setRecommending(true);
+              try {
+                await recommendBook(book.id);
+                navigate('/recommendations');
+              } finally {
+                setRecommending(false);
+              }
+            }}
+            className="text-xs px-2.5 py-1.5 rounded-lg border border-amber-200 hover:bg-amber-50 text-amber-700 disabled:opacity-50"
+          >
+            {recommending ? 'Finding…' : 'Recommend similar'}
           </button>
           {!book.lent_to && !lendMode && (
             <button onClick={() => setLendMode(true)}

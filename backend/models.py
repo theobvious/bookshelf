@@ -4,6 +4,21 @@ from sqlalchemy.orm import relationship
 from database import Base
 
 
+class Recommendation(Base):
+    __tablename__ = "recommendations"
+    id = Column(Integer, primary_key=True, index=True)
+    source_book_id = Column(Integer, ForeignKey("books.id", ondelete="CASCADE"), nullable=False)
+    title = Column(String, nullable=False)
+    author = Column(String, nullable=True)
+    reason = Column(Text, nullable=True)
+    cover_url = Column(String, nullable=True)
+    isbn = Column(String, nullable=True)
+    acquired = Column(Boolean, default=False)
+    dismissed = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    source_book = relationship("Book", back_populates="recommendations")
+
+
 class Shelf(Base):
     __tablename__ = "shelves"
 
@@ -36,6 +51,7 @@ class Book(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     shelf_books = relationship("ShelfBook", back_populates="book", cascade="all, delete-orphan")
+    recommendations = relationship("Recommendation", back_populates="source_book", cascade="all, delete-orphan")
 
 
 class ShelfBook(Base):
