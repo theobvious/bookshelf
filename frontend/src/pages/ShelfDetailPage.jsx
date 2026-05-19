@@ -73,7 +73,7 @@ export default function ShelfDetailPage() {
           </Link>
           <h1 className="text-xl font-semibold mt-0.5">{shelf.label}</h1>
           <p className="text-sm text-stone-500 mt-1">
-            {confirmed.length} book{confirmed.length !== 1 ? 's' : ''}
+            {books.length} book{books.length !== 1 ? 's' : ''}
             {needsReview.length > 0 && (
               <span className="ml-2 text-amber-700">{needsReview.length} needing review</span>
             )}
