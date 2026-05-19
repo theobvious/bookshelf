@@ -1,10 +1,11 @@
+import asyncio
 import json
 import os
 import uuid
 from typing import Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from database import get_db
 from models import Book, Shelf, ShelfBook
@@ -13,8 +14,19 @@ from schemas import BookOut, ExtractionResult, ShelfDetailOut, ShelfOut
 from services import enrichment, vision
 
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "uploads")
+ENRICH_CONCURRENCY = 12  # max simultaneous Open Library / Google Books calls
 
 router = APIRouter(prefix="/api/shelves", tags=["shelves"])
+
+
+def _load_shelf(db: Session, shelf_id: int) -> Shelf | None:
+    """Load a shelf with books eagerly to avoid N+1 queries."""
+    return (
+        db.query(Shelf)
+        .options(selectinload(Shelf.shelf_books).selectinload(ShelfBook.book))
+        .filter(Shelf.id == shelf_id)
+        .first()
+    )
 
 
 def _shelf_to_out(shelf: Shelf, db: Session) -> ShelfOut:
@@ -38,13 +50,18 @@ def _shelf_to_detail(shelf: Shelf, db: Session) -> ShelfDetailOut:
 
 @router.get("/", response_model=list[ShelfOut])
 def list_shelves(db: Session = Depends(get_db)):
-    shelves = db.query(Shelf).order_by(Shelf.created_at).all()
+    shelves = (
+        db.query(Shelf)
+        .options(selectinload(Shelf.shelf_books).selectinload(ShelfBook.book))
+        .order_by(Shelf.created_at)
+        .all()
+    )
     return [_shelf_to_out(s, db) for s in shelves]
 
 
 @router.get("/{shelf_id}", response_model=ShelfDetailOut)
 def get_shelf(shelf_id: int, db: Session = Depends(get_db)):
-    shelf = db.get(Shelf, shelf_id)
+    shelf = _load_shelf(db, shelf_id)
     if not shelf:
         raise HTTPException(status_code=404, detail="Shelf not found")
     return _shelf_to_detail(shelf, db)
@@ -63,7 +80,6 @@ async def create_shelf(
     extracted_books: list[BookOut] = []
 
     if photo and photo.filename:
-        # Save uploaded photo
         ext = os.path.splitext(photo.filename)[1].lower() or ".jpg"
         filename = f"{uuid.uuid4().hex}{ext}"
         filepath = os.path.join(UPLOAD_DIR, filename)
@@ -76,13 +92,21 @@ async def create_shelf(
         shelf.photo_path = f"/uploads/{filename}"
         db.flush()
 
-        # Extract books via Claude vision
+        # Extract books via Claude vision (single API call regardless of shelf size)
         raw_books = vision.extract_books_from_image(filepath)
 
-        for raw in raw_books:
-            # Enrich with Open Library / Google Books
-            meta = await enrichment.enrich_book(raw.get("title"), raw.get("author"), raw.get("language"))
+        # Enrich all books concurrently — dramatically faster for large shelves
+        sem = asyncio.Semaphore(ENRICH_CONCURRENCY)
 
+        async def enrich(raw: dict) -> dict:
+            async with sem:
+                return await enrichment.enrich_book(
+                    raw.get("title"), raw.get("author"), raw.get("language")
+                )
+
+        metas = await asyncio.gather(*[enrich(r) for r in raw_books])
+
+        for raw, meta in zip(raw_books, metas):
             book = Book(
                 title=raw.get("title"),
                 original_title=raw.get("original_title") or raw.get("title"),
@@ -106,6 +130,7 @@ async def create_shelf(
     db.commit()
 
     needs_review_count = sum(1 for b in extracted_books if b.needs_review)
+    shelf = _load_shelf(db, shelf.id)
     shelf_out = _shelf_to_out(shelf, db)
 
     return ExtractionResult(
@@ -117,12 +142,11 @@ async def create_shelf(
 
 @router.patch("/{shelf_id}", response_model=ShelfOut)
 def update_shelf_label(shelf_id: int, label: str = Form(...), db: Session = Depends(get_db)):
-    shelf = db.get(Shelf, shelf_id)
+    shelf = _load_shelf(db, shelf_id)
     if not shelf:
         raise HTTPException(status_code=404, detail="Shelf not found")
     shelf.label = label
     db.commit()
-    db.refresh(shelf)
     return _shelf_to_out(shelf, db)
 
 

@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { getShelves, deleteShelf } from "../api.js";
-import ShelfUploadModal from "../components/ShelfUploadModal.jsx";
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { getShelves, deleteShelf } from '../api.js';
+import ShelfUploadModal from '../components/ShelfUploadModal.jsx';
+import MiniShelfPreview from '../components/MiniShelfPreview.jsx';
 
 export default function ShelvesPage() {
   const [shelves, setShelves] = useState([]);
@@ -52,25 +53,19 @@ export default function ShelvesPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {shelves.map((shelf) => (
-            <div key={shelf.id} className="rounded-xl border border-stone-200 bg-white overflow-hidden hover:shadow-sm transition-shadow">
-              {shelf.photo_path ? (
-                <Link to={`/shelves/${shelf.id}`}>
-                  <img
-                    src={shelf.photo_path}
-                    alt={shelf.label}
-                    className="w-full h-40 object-cover"
-                  />
-                </Link>
-              ) : (
-                <Link to={`/shelves/${shelf.id}`} className="flex items-center justify-center h-40 bg-stone-100 text-5xl">
-                  📚
-                </Link>
-              )}
+            <Link
+              key={shelf.id}
+              to={`/shelves/${shelf.id}`}
+              className="group rounded-xl border border-stone-200 bg-white overflow-hidden hover:shadow-md transition-shadow"
+            >
+              {/* Mini spine preview */}
+              <div className="bg-stone-900 px-3 pt-3">
+                <MiniShelfPreview shelfId={shelf.id} bookCount={shelf.book_count} height={64} />
+              </div>
+
               <div className="p-3 flex items-start justify-between gap-2">
                 <div>
-                  <Link to={`/shelves/${shelf.id}`} className="font-medium text-sm hover:underline">
-                    {shelf.label}
-                  </Link>
+                  <p className="font-medium text-sm group-hover:underline">{shelf.label}</p>
                   <p className="text-xs text-stone-500 mt-0.5">
                     {shelf.book_count} books
                     {shelf.needs_review_count > 0 && (
@@ -79,13 +74,13 @@ export default function ShelvesPage() {
                   </p>
                 </div>
                 <button
-                  onClick={() => handleDelete(shelf.id, shelf.label)}
-                  className="text-xs text-red-500 hover:text-red-700 flex-shrink-0"
+                  onClick={(e) => { e.preventDefault(); handleDelete(shelf.id, shelf.label); }}
+                  className="text-xs text-red-400 hover:text-red-700 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
                 >
                   Delete
                 </button>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}
