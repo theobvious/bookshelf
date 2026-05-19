@@ -18,17 +18,19 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-stone-50">
-      <div className="text-center space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-stone-900 italic">Bookshelf</h1>
-          <p className="text-stone-500 text-sm mt-1">Sign in to access your catalog</p>
+    <div className="min-h-screen flex items-center justify-center bg-deep">
+      <div className="text-center space-y-8 px-6">
+        <div className="space-y-2">
+          <h1 className="font-display italic text-chalk text-4xl tracking-wide">Bookshelf</h1>
+          <p className="text-mist text-sm">Your personal library, catalogued.</p>
         </div>
         <div className="flex justify-center">
           <GoogleLogin
             onSuccess={handleSuccess}
             onError={() => alert('Google sign-in failed')}
             useOneTap
+            theme="filled_black"
+            shape="pill"
           />
         </div>
       </div>

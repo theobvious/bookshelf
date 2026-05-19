@@ -3,14 +3,16 @@
 @tailwind utilities;
 
 @layer base {
-  body {
-    font-family: 'Lora', Georgia, serif;
-    background-color: #faf6ee;
-    color: #1c1410;
+  html {
+    scroll-behavior: smooth;
   }
 
-  h1, h2, h3 {
-    font-family: 'Lora', Georgia, serif;
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background-color: #0f1117;
+    color: #e4e2dc;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
@@ -18,6 +20,7 @@
   .animate-fade-in {
     animation: fadeIn 0.15s ease-out;
   }
+
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(4px); }
     to   { opacity: 1; transform: translateY(0); }

@@ -16,10 +16,10 @@ function NavItem({ to, children }) {
     <NavLink
       to={to}
       className={({ isActive }) =>
-        `px-3 py-1.5 rounded text-sm transition-colors ${
+        `text-sm transition-colors px-1 py-0.5 border-b-2 ${
           isActive
-            ? "bg-amber-800 text-amber-100"
-            : "text-stone-300 hover:text-amber-100 hover:bg-stone-700"
+            ? "text-chalk border-ink-400"
+            : "text-mist hover:text-chalk border-transparent"
         }`
       }
     >
@@ -36,24 +36,28 @@ function ProtectedApp() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="bg-stone-900 border-b border-stone-800 sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-6">
-          <span className="font-semibold text-base tracking-wide text-amber-200 italic">
+    <div className="min-h-screen flex flex-col bg-base">
+      <header className="bg-deep border-b border-line sticky top-0 z-10">
+        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center gap-8">
+          <span className="font-display italic text-chalk text-lg tracking-wide select-none">
             Bookshelf
           </span>
-          <nav className="flex items-center gap-1 flex-1">
+          <nav className="flex items-center gap-6 flex-1">
             <NavItem to="/">Home</NavItem>
             <NavItem to="/shelves">Shelves</NavItem>
             <NavItem to="/search">Search</NavItem>
-            <NavItem to="/review">Review Queue</NavItem>
+            <NavItem to="/review">Review</NavItem>
             <NavItem to="/recommendations">Reading List</NavItem>
           </nav>
-          <div className="flex items-center gap-3">
-            {user && <span className="text-stone-400 text-xs">{user.name || user.email}</span>}
+          <div className="flex items-center gap-4">
+            {user && (
+              <span className="text-mist text-xs hidden sm:block">
+                {user.name || user.email}
+              </span>
+            )}
             <button
               onClick={logout}
-              className="text-xs text-stone-400 hover:text-stone-200 px-2 py-1 rounded hover:bg-stone-700 transition-colors"
+              className="text-xs text-smoke hover:text-mist transition-colors"
             >
               Sign out
             </button>
@@ -61,7 +65,7 @@ function ProtectedApp() {
         </div>
       </header>
 
-      <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-8">
+      <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-10">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/shelves" element={<ShelvesPage />} />

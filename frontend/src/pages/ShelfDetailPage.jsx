@@ -54,39 +54,47 @@ export default function ShelfDetailPage() {
     }
   }
 
-  if (loading) return <p className="text-stone-400 text-sm">Loading…</p>;
-  if (!shelf) return <p className="text-red-600 text-sm">Shelf not found.</p>;
+  if (loading) return (
+    <div className="flex items-center justify-center py-32">
+      <div className="w-5 h-5 rounded-full border-2 border-ink-700 border-t-ink-300 animate-spin" />
+    </div>
+  );
+  if (!shelf) return <p className="text-ember text-sm">Shelf not found.</p>;
 
   const confirmed = books.filter((b) => !b.needs_review);
   const needsReview = books.filter((b) => b.needs_review);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <Link to="/shelves" className="text-xs text-stone-400 hover:text-stone-600">
-            &larr; Shelves
+          <Link to="/shelves" className="text-xs text-smoke hover:text-mist transition-colors">
+            ← Shelves
           </Link>
-          <h1 className="text-xl font-semibold mt-0.5">{shelf.label}</h1>
-          <p className="text-sm text-stone-500 mt-1">
+          <h1 className="text-2xl font-semibold tracking-tight text-chalk mt-1">{shelf.label}</h1>
+          <p className="text-sm text-mist mt-1">
             {books.length} book{books.length !== 1 ? 's' : ''}
             {needsReview.length > 0 && (
-              <span className="ml-2 text-amber-700">{needsReview.length} needing review</span>
+              <span className="ml-2 text-glow">{needsReview.length} to review</span>
             )}
           </p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
-          <div className="flex rounded-lg border border-stone-200 overflow-hidden text-xs">
+          <div className="flex rounded-xl border border-line overflow-hidden text-xs">
             <button
               onClick={() => setView('spines')}
-              className={`px-3 py-1.5 ${view === 'spines' ? 'bg-stone-800 text-white' : 'hover:bg-stone-50 text-stone-600'}`}
+              className={`px-3 py-1.5 transition-colors ${
+                view === 'spines' ? 'bg-float text-chalk' : 'text-mist hover:text-chalk hover:bg-raised'
+              }`}
             >
               Spines
             </button>
             <button
               onClick={() => setView('list')}
-              className={`px-3 py-1.5 ${view === 'list' ? 'bg-stone-800 text-white' : 'hover:bg-stone-50 text-stone-600'}`}
+              className={`px-3 py-1.5 transition-colors ${
+                view === 'list' ? 'bg-float text-chalk' : 'text-mist hover:text-chalk hover:bg-raised'
+              }`}
             >
               List
             </button>
@@ -96,7 +104,7 @@ export default function ShelfDetailPage() {
 
       {/* Spine view */}
       {view === 'spines' && (
-        <div className="rounded-xl border border-stone-200 bg-stone-900 overflow-hidden p-4 pb-0">
+        <div className="rounded-2xl border border-line bg-deep overflow-hidden px-4 pt-4">
           <ShelfSpineView
             books={books}
             onUpdate={handleBookUpdated}
@@ -111,14 +119,14 @@ export default function ShelfDetailPage() {
       <div className="flex gap-2">
         <button
           onClick={() => setShowAddBook(true)}
-          className="text-xs px-3 py-1.5 rounded-lg border border-stone-200 hover:bg-stone-50"
+          className="text-xs px-3 py-1.5 rounded-lg border border-line hover:bg-raised text-mist hover:text-chalk transition-colors"
         >
-          + Add book manually
+          + Add book
         </button>
         <button
           onClick={loadRecommendations}
           disabled={recsLoading || confirmed.length === 0}
-          className="text-xs px-3 py-1.5 rounded-lg bg-stone-800 text-white hover:bg-stone-700 disabled:opacity-50"
+          className="text-xs px-3 py-1.5 rounded-lg bg-ink-900 border border-ink-800 text-ink-300 hover:bg-ink-800/60 disabled:opacity-40 transition-colors"
         >
           {recsLoading ? 'Thinking…' : 'Recommend books'}
         </button>
@@ -126,41 +134,31 @@ export default function ShelfDetailPage() {
 
       {/* List view */}
       {view === 'list' && (
-        <div className="space-y-4">
+        <div className="space-y-5">
           {needsReview.length > 0 && (
             <div>
-              <h2 className="text-sm font-medium text-amber-700 mb-2">
+              <p className="text-xs text-glow-dim uppercase tracking-widest font-medium mb-3">
                 Needs review ({needsReview.length})
-              </h2>
+              </p>
               <div className="space-y-2">
                 {needsReview.map((book) => (
-                  <BookCard
-                    key={book.id}
-                    book={book}
-                    onUpdate={handleBookUpdated}
-                    onDelete={handleBookDeleted}
-                  />
+                  <BookCard key={book.id} book={book} onUpdate={handleBookUpdated} onDelete={handleBookDeleted} />
                 ))}
               </div>
             </div>
           )}
           {confirmed.length > 0 && (
             <div>
-              <h2 className="text-sm font-medium text-stone-500 mb-2">Books</h2>
+              <p className="text-xs text-smoke uppercase tracking-widest font-medium mb-3">Books</p>
               <div className="space-y-2">
                 {confirmed.map((book) => (
-                  <BookCard
-                    key={book.id}
-                    book={book}
-                    onUpdate={handleBookUpdated}
-                    onDelete={handleBookDeleted}
-                  />
+                  <BookCard key={book.id} book={book} onUpdate={handleBookUpdated} onDelete={handleBookDeleted} />
                 ))}
               </div>
             </div>
           )}
           {books.length === 0 && (
-            <p className="text-sm text-stone-400 text-center py-8">No books on this shelf yet.</p>
+            <p className="text-sm text-mist text-center py-12">No books on this shelf yet.</p>
           )}
         </div>
       )}

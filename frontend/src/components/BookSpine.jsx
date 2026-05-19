@@ -20,7 +20,7 @@ export default function BookSpine({ book, onClick, selected, highlighted, height
         transition: 'transform 0.12s ease, box-shadow 0.12s ease',
         transform: selected ? 'translateY(-10px)' : undefined,
         boxShadow: highlighted
-          ? '0 0 0 2px #f59e0b, 0 0 12px rgba(245,158,11,0.6)'
+          ? '0 0 0 2px #8e9cbd, 0 0 12px rgba(142,156,189,0.5)'
           : selected
           ? '2px -6px 16px rgba(0,0,0,0.45)'
           : '1px 0 3px rgba(0,0,0,0.25)',
@@ -86,7 +86,7 @@ export default function BookSpine({ book, onClick, selected, highlighted, height
             width: 6,
             height: 6,
             borderRadius: '50%',
-            backgroundColor: '#fbbf24',
+            backgroundColor: '#8e9cbd',
             boxShadow: '0 0 0 1.5px rgba(0,0,0,0.3)',
             pointerEvents: 'none',
           }}

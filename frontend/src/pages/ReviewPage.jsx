@@ -24,24 +24,28 @@ export default function ReviewPage() {
     setBooks((prev) => prev.filter((b) => b.id !== bookId));
   }
 
-  if (loading) return <p className="text-stone-400 text-sm">Loading…</p>;
+  if (loading) return (
+    <div className="flex items-center justify-center py-32">
+      <div className="w-5 h-5 rounded-full border-2 border-ink-700 border-t-ink-300 animate-spin" />
+    </div>
+  );
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-7">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight">Review queue</h1>
-        <p className="text-stone-500 text-sm mt-1">
+        <h1 className="text-2xl font-semibold tracking-tight text-chalk">Review</h1>
+        <p className="text-mist text-sm mt-1">
           {books.length === 0
             ? 'All clear — no books need review.'
-            : `${books.length} book${books.length !== 1 ? 's' : ''} where Claude couldn't read the spine clearly.`}
+            : `${books.length} book${books.length !== 1 ? 's' : ''} where the spine wasn't legible.`}
         </p>
       </div>
 
       {books.length > 0 && (
         <>
-          <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-800">
-            Click <strong>Edit</strong> on any book to fill in the correct title, author, and language, then
-            hit <strong>Confirm &amp; save</strong> to add it to your catalog.
+          <div className="px-4 py-3 rounded-2xl bg-glow-bg border border-glow-border text-sm text-glow-text leading-relaxed">
+            Open any book to fill in the correct title, author, and language, then hit
+            {' '}<span className="font-medium">Confirm &amp; save</span> to add it to your catalog.
           </div>
           <div className="space-y-2">
             {books.map((book) => (
@@ -59,8 +63,9 @@ export default function ReviewPage() {
       )}
 
       {books.length === 0 && (
-        <div className="text-center py-16 text-stone-400">
-          <p className="text-sm text-stone-600">All books have been reviewed.</p>
+        <div className="text-center py-24 space-y-2">
+          <p className="font-display italic text-2xl text-smoke">All reviewed</p>
+          <p className="text-sm text-mist">Every book in your catalog has been confirmed.</p>
         </div>
       )}
     </div>

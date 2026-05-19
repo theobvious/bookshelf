@@ -43,8 +43,8 @@ export default function SearchPage() {
   }, [query]);
 
   return (
-    <div className="space-y-5">
-      <h1 className="text-xl font-semibold tracking-tight">Search</h1>
+    <div className="space-y-7">
+      <h1 className="text-2xl font-semibold tracking-tight text-chalk">Search</h1>
 
       <div className="relative">
         <input
@@ -53,48 +53,51 @@ export default function SearchPage() {
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search by title or author…"
           autoFocus
-          className="w-full px-4 py-3 pr-10 text-sm border border-parchment-200 rounded-xl shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-300"
+          className="w-full px-4 py-3 pr-10 text-sm bg-raised border border-line rounded-2xl text-chalk placeholder:text-smoke focus:outline-none focus:ring-1 focus:ring-ink-500/50 focus:border-ink-600/60 transition-colors"
         />
         {loading && (
-          <svg className="absolute right-3 top-3.5 h-4 w-4 animate-spin text-stone-400" viewBox="0 0 24 24" fill="none">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-          </svg>
+          <div className="absolute right-3.5 top-3.5">
+            <div className="w-4 h-4 rounded-full border-2 border-ink-700 border-t-ink-400 animate-spin" />
+          </div>
         )}
         {!loading && query && (
-          <button onClick={() => setQuery('')}
-            className="absolute right-3 top-3 text-stone-400 hover:text-stone-600 text-lg leading-none">
-            &times;
+          <button
+            onClick={() => setQuery('')}
+            className="absolute right-3 top-2.5 text-smoke hover:text-mist text-xl leading-none transition-colors"
+          >
+            ×
           </button>
         )}
       </div>
 
       {searched && results.length === 0 && (
-        <p className="text-sm text-stone-400 text-center py-8">
-          No books found for &ldquo;{query}&rdquo;.
+        <p className="text-sm text-mist text-center py-10">
+          No books found for &ldquo;{query}&rdquo;
         </p>
       )}
 
       {results.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs text-stone-400">{results.length} result{results.length !== 1 ? 's' : ''}</p>
+          <p className="text-xs text-smoke">{results.length} result{results.length !== 1 ? 's' : ''}</p>
           {results.map(({ book, locations }) => {
             const lang = book.language && LANG_NAMES[book.language];
             return (
-              <div key={book.id} className="flex gap-3 p-3 rounded-lg border border-parchment-200 bg-white">
-                <div className="flex-shrink-0 w-10 h-14 rounded overflow-hidden bg-stone-200">
-                  {book.cover_url && (
+              <div key={book.id} className="flex gap-3 p-3.5 rounded-2xl border border-line bg-raised hover:border-edge transition-colors">
+                <div className="flex-shrink-0 w-10 h-14 rounded-lg overflow-hidden bg-float">
+                  {book.cover_url ? (
                     <img src={book.cover_url} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm leading-snug">
-                    {book.title || <span className="italic text-stone-400">Unidentified</span>}
+                  <p className="font-medium text-sm leading-snug text-chalk">
+                    {book.title || <span className="italic text-smoke">Unidentified</span>}
                   </p>
-                  {book.author && <p className="text-xs text-stone-500">{book.author}</p>}
-                  <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                  {book.author && <p className="text-xs text-mist mt-0.5">{book.author}</p>}
+                  <div className="flex flex-wrap items-center gap-2 mt-2">
                     {lang && lang !== 'English' && (
-                      <span className="text-xs px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-100">
+                      <span className="text-xs px-1.5 py-0.5 rounded-md bg-ink-900 border border-ink-800 text-ink-300">
                         {lang}
                       </span>
                     )}
@@ -102,18 +105,18 @@ export default function SearchPage() {
                       <Link
                         key={loc.shelf_id}
                         to={`/shelves/${loc.shelf_id}?highlight=${book.id}`}
-                        className="text-xs text-amber-700 hover:underline"
+                        className="text-xs text-ink-400 hover:text-ink-300 transition-colors"
                       >
                         {locationLabel(loc)}
                       </Link>
                     ))}
                     {book.lent_to && (
-                      <span className="text-xs px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
+                      <span className="text-xs px-1.5 py-0.5 rounded-md bg-glow-bg border border-glow-border text-glow">
                         Lent to {book.lent_to}
                       </span>
                     )}
                     {book.needs_review && (
-                      <span className="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">
+                      <span className="text-xs px-1.5 py-0.5 rounded-md bg-glow-bg border border-glow-border text-glow-dim">
                         Needs review
                       </span>
                     )}
@@ -126,9 +129,9 @@ export default function SearchPage() {
       )}
 
       {!searched && !query && (
-        <div className="text-center py-16 text-stone-400">
-          <p className="text-sm">Type to search your catalog</p>
-          <p className="text-xs mt-1">Searches titles, original titles, and authors — in any language</p>
+        <div className="text-center py-20 space-y-1">
+          <p className="text-sm text-mist">Type to search your catalog</p>
+          <p className="text-xs text-smoke">Titles, original titles, and authors — in any language</p>
         </div>
       )}
     </div>

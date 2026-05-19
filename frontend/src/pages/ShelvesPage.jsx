@@ -24,27 +24,36 @@ export default function ShelvesPage() {
     setShelves((prev) => prev.filter((s) => s.id !== id));
   }
 
-  if (loading) return <p className="text-stone-400 text-sm">Loading…</p>;
+  if (loading) return (
+    <div className="flex items-center justify-center py-32">
+      <div className="w-5 h-5 rounded-full border-2 border-ink-700 border-t-ink-300 animate-spin" />
+    </div>
+  );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold tracking-tight">Shelves</h1>
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-chalk">Shelves</h1>
+          <p className="text-mist text-sm mt-1">
+            {shelves.length} {shelves.length === 1 ? 'shelf' : 'shelves'}
+          </p>
+        </div>
         <button
           onClick={() => setShowUpload(true)}
-          className="px-4 py-2 text-sm rounded-lg bg-amber-600 text-white hover:bg-amber-700 font-medium"
+          className="px-4 py-2 text-sm rounded-xl bg-ink-900 border border-ink-800 text-ink-300 hover:bg-ink-800/60 font-medium transition-colors"
         >
-          + Add shelf
+          Add shelf
         </button>
       </div>
 
       {shelves.length === 0 ? (
-        <div className="text-center py-16 text-stone-400">
-          <p className="font-medium text-stone-600">No shelves yet</p>
-          <p className="text-sm mt-1">Upload a photo of your bookshelf to get started.</p>
+        <div className="text-center py-24 space-y-4">
+          <p className="font-display italic text-2xl text-smoke">No shelves yet</p>
+          <p className="text-sm text-mist">Upload a photo of your bookshelf to get started.</p>
           <button
             onClick={() => setShowUpload(true)}
-            className="mt-4 px-5 py-2 text-sm rounded-lg bg-amber-600 text-white hover:bg-amber-700"
+            className="mt-2 px-5 py-2.5 text-sm rounded-xl bg-ink-900 border border-ink-800 text-ink-300 hover:bg-ink-800/60 transition-colors"
           >
             Add your first shelf
           </button>
@@ -55,25 +64,26 @@ export default function ShelvesPage() {
             <Link
               key={shelf.id}
               to={`/shelves/${shelf.id}`}
-              className="group rounded-xl border border-stone-200 bg-white overflow-hidden hover:shadow-md transition-shadow"
+              className="group rounded-2xl border border-line bg-raised overflow-hidden hover:border-edge transition-all"
             >
-              <div className="bg-stone-900 px-3 pt-3">
-                <MiniShelfPreview shelfId={shelf.id} bookCount={shelf.book_count} height={64} />
+              <div className="bg-deep px-3 pt-3">
+                <MiniShelfPreview shelfId={shelf.id} bookCount={shelf.book_count} height={68} />
               </div>
-
-              <div className="p-3 flex items-start justify-between gap-2">
+              <div className="p-4 flex items-start justify-between gap-3">
                 <div>
-                  <p className="font-medium text-sm group-hover:underline">{shelf.label}</p>
-                  <p className="text-xs text-stone-500 mt-0.5">
+                  <p className="font-medium text-sm text-chalk group-hover:text-ink-200 transition-colors">
+                    {shelf.label}
+                  </p>
+                  <p className="text-xs text-mist mt-0.5">
                     {shelf.book_count} books
                     {shelf.needs_review_count > 0 && (
-                      <span className="ml-2 text-amber-700">{shelf.needs_review_count} to review</span>
+                      <span className="ml-2 text-glow">{shelf.needs_review_count} to review</span>
                     )}
                   </p>
                 </div>
                 <button
                   onClick={(e) => { e.preventDefault(); handleDelete(shelf.id, shelf.label); }}
-                  className="text-xs text-red-400 hover:text-red-700 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="text-xs text-smoke hover:text-ember flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all"
                 >
                   Delete
                 </button>

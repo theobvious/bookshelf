@@ -12,7 +12,7 @@ const LANGUAGES = [
   ["tr", "Turkish"], ["el", "Greek"], ["ro", "Romanian"], ["uk", "Ukrainian"],
 ];
 
-const inputClass = "w-full px-3 py-2 text-sm border border-parchment-200 rounded-lg bg-parchment-50 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:bg-white transition-colors";
+const inputCls = "w-full px-3 py-2.5 text-sm bg-float border border-line rounded-xl text-chalk placeholder:text-smoke focus:outline-none focus:ring-1 focus:ring-ink-500/50 focus:border-ink-600/60 transition-colors";
 
 export default function BookEditModal({ book, shelfPhotoUrl, onSave, onClose }) {
   const [form, setForm] = useState({
@@ -26,7 +26,6 @@ export default function BookEditModal({ book, shelfPhotoUrl, onSave, onClose }) 
   const [error, setError] = useState(null);
   const [showViewer, setShowViewer] = useState(false);
 
-  // Auto-enrich on open when reviewing a book that has a title but no author
   useEffect(() => {
     if (!book.needs_review || !book.title || book.author) return;
     enrichBook(book.id).then((enriched) => {
@@ -65,19 +64,24 @@ export default function BookEditModal({ book, shelfPhotoUrl, onSave, onClose }) 
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 animate-fade-in"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 border border-parchment-200">
+      <div className="bg-raised rounded-2xl shadow-2xl border border-line w-full max-w-md mx-4 p-6">
         <div className="flex items-center justify-between mb-5">
-          <h2 className="font-semibold text-base text-stone-900">
+          <h2 className="font-semibold text-base text-chalk">
             {book.needs_review ? "Review book" : "Edit book"}
           </h2>
-          <button onClick={onClose} className="text-stone-400 hover:text-stone-700 text-xl leading-none">&times;</button>
+          <button
+            onClick={onClose}
+            className="text-smoke hover:text-mist text-xl leading-none transition-colors"
+          >
+            ×
+          </button>
         </div>
 
         {book.needs_review && (
-          <div className="mb-4 p-3 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-800">
+          <div className="mb-4 p-3.5 rounded-xl bg-glow-bg border border-glow-border text-sm text-glow-text">
             <div className="flex gap-3 items-start">
               {showPhotoSection && (
                 <div className="flex-shrink-0">
@@ -94,17 +98,17 @@ export default function BookEditModal({ book, shelfPhotoUrl, onSave, onClose }) 
                       src={shelfPhotoUrl}
                       alt="shelf"
                       onClick={() => setShowViewer(true)}
-                      style={{ width: 72, height: 110, objectFit: 'cover', objectPosition: 'center', borderRadius: 4, cursor: 'zoom-in' }}
+                      style={{ width: 72, height: 110, objectFit: 'cover', objectPosition: 'center', borderRadius: 8, cursor: 'zoom-in' }}
                     />
                   )}
-                  <p className="text-xs text-amber-700 text-center mt-1">{hasBbox ? 'Spine' : 'Shelf'}</p>
+                  <p className="text-xs text-glow-dim text-center mt-1">{hasBbox ? 'Spine' : 'Shelf'}</p>
                 </div>
               )}
               <div>
-                <strong>Couldn't read this spine clearly.</strong>
-                {book.review_notes && <p className="mt-1 italic">{book.review_notes}</p>}
+                <strong className="text-glow-text">Spine wasn't legible.</strong>
+                {book.review_notes && <p className="mt-1 text-glow-dim italic text-xs">{book.review_notes}</p>}
                 {book.confidence != null && (
-                  <p className="mt-1 text-xs">Confidence: {Math.round(book.confidence * 100)}%</p>
+                  <p className="mt-1 text-xs text-smoke">Confidence: {Math.round(book.confidence * 100)}%</p>
                 )}
               </div>
             </div>
@@ -112,57 +116,60 @@ export default function BookEditModal({ book, shelfPhotoUrl, onSave, onClose }) 
         )}
 
         {book.needs_review && (book.title || book.author) && (
-          <p className="text-xs text-stone-400 italic mb-3">
-            Fields pre-filled with Claude's best reading — correct anything that looks wrong.
+          <p className="text-xs text-smoke italic mb-4">
+            Pre-filled with Claude's best reading — correct anything that looks wrong.
           </p>
         )}
 
         <div className="space-y-3">
           <div>
-            <label className="block text-xs font-medium text-stone-500 mb-1">Title</label>
+            <label className="block text-xs font-medium text-mist mb-1.5">Title</label>
             <input type="text" value={form.title} onChange={(e) => set("title", e.target.value)}
-              placeholder="Book title" className={inputClass} />
+              placeholder="Book title" className={inputCls} />
           </div>
           <div>
-            <label className="block text-xs font-medium text-stone-500 mb-1">
-              Original title <span className="font-normal text-stone-400">(if different)</span>
+            <label className="block text-xs font-medium text-mist mb-1.5">
+              Original title <span className="font-normal text-smoke">(if different)</span>
             </label>
             <input type="text" value={form.original_title} onChange={(e) => set("original_title", e.target.value)}
-              placeholder="Original language title" className={inputClass} />
+              placeholder="Original language title" className={inputCls} />
           </div>
           <div>
-            <label className="block text-xs font-medium text-stone-500 mb-1">Author</label>
+            <label className="block text-xs font-medium text-mist mb-1.5">Author</label>
             <input type="text" value={form.author} onChange={(e) => set("author", e.target.value)}
-              placeholder="Author name" className={inputClass} />
+              placeholder="Author name" className={inputCls} />
           </div>
           <div className="flex gap-3">
             <div className="flex-1">
-              <label className="block text-xs font-medium text-stone-500 mb-1">Language</label>
-              <select value={form.language} onChange={(e) => set("language", e.target.value)} className={inputClass}>
+              <label className="block text-xs font-medium text-mist mb-1.5">Language</label>
+              <select value={form.language} onChange={(e) => set("language", e.target.value)} className={inputCls}>
                 {LANGUAGES.map(([code, name]) => (
                   <option key={code} value={code}>{name}</option>
                 ))}
               </select>
             </div>
             <div className="flex-1">
-              <label className="block text-xs font-medium text-stone-500 mb-1">ISBN</label>
+              <label className="block text-xs font-medium text-mist mb-1.5">ISBN</label>
               <input type="text" value={form.isbn} onChange={(e) => set("isbn", e.target.value)}
-                placeholder="Optional" className={inputClass} />
+                placeholder="Optional" className={inputCls} />
             </div>
           </div>
         </div>
 
-        {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+        {error && <p className="mt-3 text-sm text-ember">{error}</p>}
 
         <div className="mt-5 flex gap-2 justify-end">
-          <button onClick={onClose}
-            className="px-4 py-2 text-sm rounded-lg border border-parchment-200 hover:bg-parchment-50 text-stone-600">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm rounded-xl border border-line hover:bg-float text-mist transition-colors"
+          >
             Cancel
           </button>
-          <button onClick={handleSave} disabled={saving || !form.title}
-            className={`px-4 py-2 text-sm rounded-lg text-white disabled:opacity-50 ${
-              book.needs_review ? "bg-amber-700 hover:bg-amber-800" : "bg-stone-800 hover:bg-stone-700"
-            }`}>
+          <button
+            onClick={handleSave}
+            disabled={saving || !form.title}
+            className="px-4 py-2 text-sm rounded-xl bg-chalk text-deep font-medium hover:bg-chalk/90 disabled:opacity-40 transition-colors"
+          >
             {saving ? "Saving…" : book.needs_review ? "Confirm & save" : "Save changes"}
           </button>
         </div>
