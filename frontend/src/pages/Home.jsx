@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getShelves, getBooks } from '../api.js';
+import { getShelves } from '../api.js';
 import MiniShelfPreview from '../components/MiniShelfPreview.jsx';
 
 export default function Home() {
@@ -9,12 +9,10 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([getShelves(), getBooks({ needs_review: true })])
-      .then(([s, r]) => {
-        setShelves(s);
-        setReviewCount(r.length);
-      })
-      .finally(() => setLoading(false));
+    getShelves().then((s) => {
+      setShelves(s);
+      setReviewCount(s.reduce((n, shelf) => n + shelf.needs_review_count, 0));
+    }).finally(() => setLoading(false));
   }, []);
 
   const totalBooks = shelves.reduce((n, s) => n + s.book_count, 0);
