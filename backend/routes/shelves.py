@@ -19,7 +19,7 @@ ENRICH_CONCURRENCY = 12  # max simultaneous Open Library / Google Books calls
 router = APIRouter(prefix="/api/shelves", tags=["shelves"])
 
 
-def _load_shelf(db: Session, shelf_id: int) -> Shelf | None:
+def _load_shelf(db: Session, shelf_id: int) -> Optional[Shelf]:
     """Load a shelf with books eagerly to avoid N+1 queries."""
     return (
         db.query(Shelf)
