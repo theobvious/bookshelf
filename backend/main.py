@@ -56,6 +56,7 @@ app.include_router(shelves.router)
 app.include_router(books.router)
 app.include_router(recommendations.router)
 
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 
