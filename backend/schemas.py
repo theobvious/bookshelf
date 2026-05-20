@@ -44,6 +44,7 @@ class BookOut(BookBase):
     shelf_row: int = 1
     position_in_row: int = 0
     bbox: Optional[list] = None  # [x, y, w, h] fractions
+    spine_color: Optional[str] = None
     shelf_photo_url: Optional[str] = None
 
     @field_validator("genres", mode="before")

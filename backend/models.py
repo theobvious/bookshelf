@@ -50,6 +50,7 @@ class Book(Base):
     confidence = Column(Float, nullable=True)
     review_notes = Column(String, nullable=True)
     bbox = Column(String, nullable=True)       # JSON [x, y, w, h] as fractions 0–1
+    spine_color = Column(String, nullable=True) # hex color sampled from spine photo
     lent_to = Column(String, nullable=True)    # borrower's name, null = on shelf
     source = Column(String, default="extracted")
     created_at = Column(DateTime, default=datetime.utcnow)

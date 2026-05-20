@@ -64,6 +64,7 @@ def init_db():
             "ALTER TABLE shelf_books ADD COLUMN position_in_row INTEGER DEFAULT 0",
             "ALTER TABLE books ADD COLUMN lent_to TEXT",
             "ALTER TABLE shelves ADD COLUMN owner_sub TEXT",
+            "ALTER TABLE books ADD COLUMN spine_color TEXT",
         ]:
             try:
                 conn.execute(text(stmt))

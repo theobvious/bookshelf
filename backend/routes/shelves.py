@@ -108,6 +108,7 @@ async def create_shelf(
 
         for raw, meta in zip(raw_books, metas):
             bbox = raw.get("bbox")
+            spine_color = vision.sample_spine_color(filepath, bbox) if bbox else None
             book = Book(
                 title=raw.get("title"),
                 original_title=raw.get("original_title") or raw.get("title"),
@@ -121,6 +122,7 @@ async def create_shelf(
                 confidence=raw.get("confidence"),
                 review_notes=raw.get("notes"),
                 bbox=json.dumps(bbox) if bbox else None,
+                spine_color=spine_color,
                 source="extracted",
             )
             db.add(book)

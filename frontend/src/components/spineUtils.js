@@ -34,6 +34,7 @@ function djb2(str) {
 }
 
 export function spineColor(book) {
+  if (book.spine_color) return book.spine_color;
   const h = djb2((book.title || '') + (book.author || ''));
   return SPINE_COLORS[h % SPINE_COLORS.length];
 }

@@ -70,6 +70,49 @@ def _parse_json_array(text: str) -> list:
             return []
 
 
+def sample_spine_color(image_path: str, bbox: list) -> str | None:
+    """Crop a spine bbox and return its dominant hex color, darkened for readability."""
+    try:
+        img = Image.open(image_path).convert("RGB")
+        iw, ih = img.size
+        x, y, bw, bh = bbox
+
+        left  = max(0,  int(x * iw) + 1)
+        top   = max(0,  int(y * ih) + 1)
+        right = min(iw, int((x + bw) * iw) - 1)
+        bottom= min(ih, int((y + bh) * ih) - 1)
+
+        if right <= left or bottom <= top:
+            return None
+
+        spine = img.crop((left, top, right, bottom)).resize((15, 40), Image.LANCZOS)
+        pixels = list(spine.getdata())
+
+        # Exclude near-white (text) and near-black (shadow/edge)
+        filtered = [
+            p for p in pixels
+            if not (p[0] > 215 and p[1] > 215 and p[2] > 215)
+            and not (p[0] < 35  and p[1] < 35  and p[2] < 35)
+        ]
+        if len(filtered) < 5:
+            filtered = pixels
+
+        # Weight each pixel by its saturation so vivid hues dominate over neutral grays
+        r_sum = g_sum = b_sum = total_w = 0.0
+        for r, g, b in filtered:
+            hi, lo = max(r, g, b), min(r, g, b)
+            sat = (hi - lo) / hi if hi > 0 else 0
+            w = max(0.05, sat)
+            r_sum += r * w; g_sum += g * w; b_sum += b * w; total_w += w
+
+        r = int(r_sum / total_w * 0.78)
+        g = int(g_sum / total_w * 0.78)
+        b = int(b_sum / total_w * 0.78)
+        return f"#{r:02x}{g:02x}{b:02x}"
+    except Exception:
+        return None
+
+
 def extract_books_from_image(image_path: str) -> list:
     image_bytes, media_type = _resize_for_upload(image_path)
     image_data = base64.standard_b64encode(image_bytes).decode("utf-8")

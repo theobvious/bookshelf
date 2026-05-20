@@ -66,6 +66,7 @@ def _book_to_out(book: Book, db: Session, context_shelf_id: Optional[int] = None
         shelf_row=shelf_row,
         position_in_row=position_in_row,
         bbox=bbox,
+        spine_color=book.spine_color,
         shelf_photo_url=shelf_photo_url,
     )
 
