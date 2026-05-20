@@ -8,7 +8,14 @@ from PIL import Image
 
 CONFIDENCE_THRESHOLD = 0.75
 
-client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+_client = None
+
+
+def _get_client():
+    global _client
+    if _client is None:
+        _client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+    return _client
 
 EXTRACTION_PROMPT = """Analyze this photo of a bookshelf.
 
@@ -67,7 +74,7 @@ def extract_books_from_image(image_path: str) -> list:
     image_bytes, media_type = _resize_for_upload(image_path)
     image_data = base64.standard_b64encode(image_bytes).decode("utf-8")
 
-    message = client.messages.create(
+    message = _get_client().messages.create(
         model="claude-opus-4-7",
         max_tokens=8096,
         messages=[

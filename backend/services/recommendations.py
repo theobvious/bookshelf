@@ -4,8 +4,22 @@ from typing import Optional
 
 import anthropic
 
-client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
-async_client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+_client = None
+_async_client = None
+
+
+def _get_client():
+    global _client
+    if _client is None:
+        _client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+    return _client
+
+
+def _get_async_client():
+    global _async_client
+    if _async_client is None:
+        _async_client = anthropic.AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+    return _async_client
 
 RECOMMEND_PROMPT = """I have a bookshelf labeled "{label}" containing these books:
 
@@ -37,7 +51,7 @@ def get_recommendations(shelf_label: str, books: list[dict]) -> dict:
         for b in books
     )
 
-    message = client.messages.create(
+    message = _get_client().messages.create(
         model="claude-opus-4-7",
         max_tokens=2048,
         messages=[{"role": "user", "content": RECOMMEND_PROMPT.format(label=shelf_label, book_list=book_list)}],
@@ -73,7 +87,7 @@ async def get_book_recommendations(book: dict) -> list:
     genres = ", ".join(book.get("genres") or []) or "Not specified"
     language = book.get("language") or "en"
 
-    message = await async_client.messages.create(
+    message = await _get_async_client().messages.create(
         model="claude-opus-4-7",
         max_tokens=1024,
         messages=[{
