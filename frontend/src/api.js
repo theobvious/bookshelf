@@ -5,11 +5,20 @@ function getToken() {
   return localStorage.getItem("bookshelf_token");
 }
 
-async function request(path, options = {}) {
+async function request(path, options = {}, attempt = 0) {
   const token = getToken();
   const headers = { ...(options.headers ?? {}) };
   if (token) headers["Authorization"] = `Bearer ${token}`;
-  const res = await fetch(`${BASE}${path}`, { ...options, headers });
+  let res;
+  try {
+    res = await fetch(`${BASE}${path}`, { ...options, headers });
+  } catch (networkErr) {
+    if (attempt < 2) {
+      await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+      return request(path, options, attempt + 1);
+    }
+    throw networkErr;
+  }
   if (res.status === 401) {
     localStorage.removeItem("bookshelf_token");
     localStorage.removeItem("bookshelf_user");
