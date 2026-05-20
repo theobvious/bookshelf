@@ -73,6 +73,8 @@ def _parse_json_array(text: str) -> list:
 def sample_spine_color(image_path: str, bbox: list) -> str | None:
     """Crop a spine bbox and return its dominant hex color, darkened for readability."""
     try:
+        if not (isinstance(bbox, (list, tuple)) and len(bbox) == 4):
+            return None
         img = Image.open(image_path).convert("RGB")
         iw, ih = img.size
         x, y, bw, bh = bbox
