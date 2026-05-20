@@ -28,6 +28,7 @@ class Shelf(Base):
     owner_sub = Column(String, nullable=True, index=True)
     label = Column(String, nullable=False)
     photo_path = Column(String, nullable=True)
+    photo_hash = Column(String, nullable=True)  # perceptual hash for deduplication
     created_at = Column(DateTime, default=datetime.utcnow)
 
     shelf_books = relationship("ShelfBook", back_populates="shelf", cascade="all, delete-orphan")
@@ -52,6 +53,7 @@ class Book(Base):
     bbox = Column(String, nullable=True)       # JSON [x, y, w, h] as fractions 0–1
     spine_color = Column(String, nullable=True) # hex color sampled from spine photo
     lent_to = Column(String, nullable=True)    # borrower's name, null = on shelf
+    is_behind = Column(Boolean, default=False) # obscured by front-row books
     source = Column(String, default="extracted")
     created_at = Column(DateTime, default=datetime.utcnow)
 

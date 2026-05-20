@@ -49,6 +49,53 @@ export async function createShelf(label, photoFile) {
   return request("/shelves/", { method: "POST", body: form });
 }
 
+export async function analyzeShelf(photoFile) {
+  const form = new FormData();
+  form.append("photo", photoFile);
+  return request("/shelves/analyze", { method: "POST", body: form });
+}
+
+export async function createShelfFromAnalysis(label, extractedBooks, tempPhotoPath, photoHash) {
+  return request("/shelves/from-analysis", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      label,
+      extracted_books: extractedBooks,
+      temp_photo_path: tempPhotoPath,
+      photo_hash: photoHash,
+    }),
+  });
+}
+
+export async function diffShelf(shelfId, extractedBooks) {
+  return request(`/shelves/${shelfId}/diff`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ extracted_books: extractedBooks }),
+  });
+}
+
+export async function applyDiff(shelfId, add, remove, tempPhotoPath, photoHash) {
+  return request(`/shelves/${shelfId}/apply-diff`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ add, remove, temp_photo_path: tempPhotoPath, photo_hash: photoHash }),
+  });
+}
+
+export async function mergeRow(shelfId, extractedBooks, tempPhotoPath, photoHash) {
+  return request(`/shelves/${shelfId}/merge-row`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      extracted_books: extractedBooks,
+      temp_photo_path: tempPhotoPath,
+      photo_hash: photoHash,
+    }),
+  });
+}
+
 export const getShelfRecommendations = (shelfId, regenerate = false) =>
   request(`/shelves/${shelfId}/recommendations${regenerate ? '?regenerate=true' : ''}`, { method: 'POST' });
 

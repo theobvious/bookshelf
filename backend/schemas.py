@@ -17,6 +17,7 @@ class BookBase(BaseModel):
     confidence: Optional[float] = None
     review_notes: Optional[str] = None
     lent_to: Optional[str] = None
+    is_behind: bool = False
     source: str = "extracted"
 
 
@@ -144,3 +145,68 @@ class SearchResult(BaseModel):
     book: BookOut
     shelf_labels: list[str]
     locations: list[ShelfLocation] = []
+
+
+# ── Shelf identification / deduplication ──────────────────────────────────────
+
+class ExtractedBook(BaseModel):
+    title: Optional[str] = None
+    original_title: Optional[str] = None
+    author: Optional[str] = None
+    language: Optional[str] = "en"
+    row: int = 1
+    position: int = 0
+    bbox: Optional[list] = None
+    confidence: Optional[float] = None
+    needs_review: bool = False
+    notes: Optional[str] = None
+    spine_color: Optional[str] = None
+    isbn: Optional[str] = None
+    cover_url: Optional[str] = None
+    description: Optional[str] = None
+    genres: Optional[list] = None
+    is_behind: bool = False
+
+
+class SimilarShelf(BaseModel):
+    shelf: ShelfOut
+    confidence: float
+    photo_similarity: float
+    book_overlap: float
+
+
+class AnalyzeResult(BaseModel):
+    extracted_books: list[ExtractedBook]
+    photo_hash: Optional[str] = None
+    temp_photo_path: Optional[str] = None
+    similar_shelves: list[SimilarShelf]
+
+
+class DiffBody(BaseModel):
+    extracted_books: list[ExtractedBook]
+
+
+class DiffResult(BaseModel):
+    matched: list[BookOut]
+    added: list[ExtractedBook]
+    removed: list[BookOut]
+
+
+class ApplyDiffBody(BaseModel):
+    add: list[ExtractedBook] = []
+    remove: list[int] = []
+    temp_photo_path: Optional[str] = None
+    photo_hash: Optional[str] = None
+
+
+class MergeRowBody(BaseModel):
+    extracted_books: list[ExtractedBook]
+    temp_photo_path: Optional[str] = None
+    photo_hash: Optional[str] = None
+
+
+class CreateFromAnalysisBody(BaseModel):
+    label: str
+    extracted_books: list[ExtractedBook]
+    temp_photo_path: Optional[str] = None
+    photo_hash: Optional[str] = None

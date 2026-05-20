@@ -65,6 +65,8 @@ def init_db():
             "ALTER TABLE books ADD COLUMN lent_to TEXT",
             "ALTER TABLE shelves ADD COLUMN owner_sub TEXT",
             "ALTER TABLE books ADD COLUMN spine_color TEXT",
+            "ALTER TABLE shelves ADD COLUMN photo_hash TEXT",
+            "ALTER TABLE books ADD COLUMN is_behind BOOLEAN DEFAULT 0",
         ]:
             try:
                 conn.execute(text(stmt))
