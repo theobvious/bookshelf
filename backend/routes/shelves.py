@@ -15,17 +15,16 @@ from schemas import BookOut, ExtractionResult, ShelfDetailOut, ShelfOut
 from services import enrichment, vision
 
 UPLOAD_DIR = os.environ.get("UPLOAD_DIR", os.path.join(os.path.dirname(__file__), "..", "uploads"))
-ENRICH_CONCURRENCY = 12  # max simultaneous Open Library / Google Books calls
+ENRICH_CONCURRENCY = 12
 
-router = APIRouter(prefix="/api/shelves", tags=["shelves"], dependencies=[Depends(require_auth)])
+router = APIRouter(prefix="/api/shelves", tags=["shelves"])
 
 
-def _load_shelf(db: Session, shelf_id: int) -> Optional[Shelf]:
-    """Load a shelf with books eagerly to avoid N+1 queries."""
+def _load_shelf(db: Session, shelf_id: int, owner_sub: str) -> Optional[Shelf]:
     return (
         db.query(Shelf)
         .options(selectinload(Shelf.shelf_books).selectinload(ShelfBook.book))
-        .filter(Shelf.id == shelf_id)
+        .filter(Shelf.id == shelf_id, Shelf.owner_sub == owner_sub)
         .first()
     )
 
@@ -50,10 +49,11 @@ def _shelf_to_detail(shelf: Shelf, db: Session) -> ShelfDetailOut:
 
 
 @router.get("/", response_model=list[ShelfOut])
-def list_shelves(db: Session = Depends(get_db)):
+def list_shelves(db: Session = Depends(get_db), user: dict = Depends(require_auth)):
     shelves = (
         db.query(Shelf)
         .options(selectinload(Shelf.shelf_books).selectinload(ShelfBook.book))
+        .filter(Shelf.owner_sub == user["sub"])
         .order_by(Shelf.created_at)
         .all()
     )
@@ -61,8 +61,8 @@ def list_shelves(db: Session = Depends(get_db)):
 
 
 @router.get("/{shelf_id}", response_model=ShelfDetailOut)
-def get_shelf(shelf_id: int, db: Session = Depends(get_db)):
-    shelf = _load_shelf(db, shelf_id)
+def get_shelf(shelf_id: int, db: Session = Depends(get_db), user: dict = Depends(require_auth)):
+    shelf = _load_shelf(db, shelf_id, user["sub"])
     if not shelf:
         raise HTTPException(status_code=404, detail="Shelf not found")
     return _shelf_to_detail(shelf, db)
@@ -73,8 +73,9 @@ async def create_shelf(
     label: str = Form(...),
     photo: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
+    user: dict = Depends(require_auth),
 ):
-    shelf = Shelf(label=label)
+    shelf = Shelf(label=label, owner_sub=user["sub"])
     db.add(shelf)
     db.flush()
 
@@ -93,10 +94,8 @@ async def create_shelf(
         shelf.photo_path = f"/uploads/{filename}"
         db.flush()
 
-        # Extract books via Claude vision (single API call regardless of shelf size)
         raw_books = vision.extract_books_from_image(filepath)
 
-        # Enrich all books concurrently — dramatically faster for large shelves
         sem = asyncio.Semaphore(ENRICH_CONCURRENCY)
 
         async def enrich(raw: dict) -> dict:
@@ -138,7 +137,7 @@ async def create_shelf(
     db.commit()
 
     needs_review_count = sum(1 for b in extracted_books if b.needs_review)
-    shelf = _load_shelf(db, shelf.id)
+    shelf = _load_shelf(db, shelf.id, user["sub"])
     shelf_out = _shelf_to_out(shelf, db)
 
     return ExtractionResult(
@@ -149,8 +148,13 @@ async def create_shelf(
 
 
 @router.patch("/{shelf_id}", response_model=ShelfOut)
-def update_shelf_label(shelf_id: int, label: str = Form(...), db: Session = Depends(get_db)):
-    shelf = _load_shelf(db, shelf_id)
+def update_shelf_label(
+    shelf_id: int,
+    label: str = Form(...),
+    db: Session = Depends(get_db),
+    user: dict = Depends(require_auth),
+):
+    shelf = _load_shelf(db, shelf_id, user["sub"])
     if not shelf:
         raise HTTPException(status_code=404, detail="Shelf not found")
     shelf.label = label
@@ -159,8 +163,8 @@ def update_shelf_label(shelf_id: int, label: str = Form(...), db: Session = Depe
 
 
 @router.delete("/{shelf_id}", status_code=204)
-def delete_shelf(shelf_id: int, db: Session = Depends(get_db)):
-    shelf = db.get(Shelf, shelf_id)
+def delete_shelf(shelf_id: int, db: Session = Depends(get_db), user: dict = Depends(require_auth)):
+    shelf = db.query(Shelf).filter(Shelf.id == shelf_id, Shelf.owner_sub == user["sub"]).first()
     if not shelf:
         raise HTTPException(status_code=404, detail="Shelf not found")
     db.delete(shelf)

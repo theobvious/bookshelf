@@ -25,6 +25,7 @@ class Shelf(Base):
     __tablename__ = "shelves"
 
     id = Column(Integer, primary_key=True, index=True)
+    owner_sub = Column(String, nullable=True, index=True)
     label = Column(String, nullable=False)
     photo_path = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
