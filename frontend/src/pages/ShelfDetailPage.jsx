@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { getShelf, deleteBook, getShelfRecommendations } from '../api.js';
+import { getShelf, deleteBook, getShelfRecommendations, assetUrl } from '../api.js';
 import ShelfSpineView from '../components/ShelfSpineView.jsx';
 import BookCard from '../components/BookCard.jsx';
 import AddBookModal from '../components/AddBookModal.jsx';
@@ -109,7 +109,7 @@ export default function ShelfDetailPage() {
             books={books}
             onUpdate={handleBookUpdated}
             onDelete={handleBookDeleted}
-            shelfPhotoUrl={shelf.photo_path}
+            shelfPhotoUrl={assetUrl(shelf.photo_path)}
             highlightBookId={highlightBookId}
           />
         </div>

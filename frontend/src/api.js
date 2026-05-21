@@ -1,6 +1,12 @@
 const BACKEND = import.meta.env.VITE_BACKEND_URL ?? "";
 const BASE = `${BACKEND}/api`;
 
+export function assetUrl(path) {
+  if (!path) return null;
+  if (path.startsWith("/uploads/")) return `${BACKEND}${path}`;
+  return path;
+}
+
 function getToken() {
   return localStorage.getItem("bookshelf_token");
 }

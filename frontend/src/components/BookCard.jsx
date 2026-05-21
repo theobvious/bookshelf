@@ -1,5 +1,6 @@
 import { useState } from "react";
 import BookEditModal from "./BookEditModal.jsx";
+import { assetUrl } from "../api.js";
 
 const LANG_NAMES = {
   en: "English", fr: "French", de: "German", es: "Spanish", it: "Italian",
@@ -80,7 +81,7 @@ export default function BookCard({ book, onUpdate, onDelete, showShelf, shelfLab
       {editing && (
         <BookEditModal
           book={book}
-          shelfPhotoUrl={shelfPhotoUrl || book.shelf_photo_url}
+          shelfPhotoUrl={assetUrl(shelfPhotoUrl || book.shelf_photo_url)}
           onSave={(updated) => { onUpdate(updated); setEditing(false); }}
           onClose={() => setEditing(false)}
         />
