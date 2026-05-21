@@ -67,7 +67,7 @@ export default function BookEditModal({ book, shelfPhotoUrl, onSave, onClose }) 
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 animate-fade-in"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-raised rounded-2xl shadow-2xl border border-line w-full max-w-md mx-4 p-6">
+      <div className="bg-raised rounded-2xl shadow-2xl border border-line w-full max-w-md mx-4 p-6" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-5">
           <h2 className="font-semibold text-base text-chalk">
             {book.needs_review ? "Review book" : "Edit book"}
