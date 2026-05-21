@@ -63,11 +63,12 @@ export default function BookEditModal({ book, shelfPhotoUrl, onSave, onClose }) 
   const showPhotoSection = !!shelfPhotoUrl;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 animate-fade-in"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-    >
-      <div className="bg-raised rounded-2xl shadow-2xl border border-line w-full max-w-md mx-4 p-6" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 animate-fade-in">
+      {/* Backdrop — separate layer so nothing inside the modal can accidentally trigger it */}
+      <div className="absolute inset-0 bg-black/70" onClick={onClose} />
+      {/* Modal — rendered after backdrop so it sits on top in stacking order */}
+      <div className="relative flex items-center justify-center min-h-full p-4">
+      <div className="bg-raised rounded-2xl shadow-2xl border border-line w-full max-w-md p-6">
         <div className="flex items-center justify-between mb-5">
           <h2 className="font-semibold text-base text-chalk">
             {book.needs_review ? "Review book" : "Edit book"}
@@ -173,6 +174,7 @@ export default function BookEditModal({ book, shelfPhotoUrl, onSave, onClose }) 
             {saving ? "Saving…" : book.needs_review ? "Confirm & save" : "Save changes"}
           </button>
         </div>
+      </div>
       </div>
 
       {showViewer && shelfPhotoUrl && (
