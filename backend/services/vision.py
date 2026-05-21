@@ -36,7 +36,7 @@ Then, for every visible book spine, return a JSON array. Each element must have:
 
 Rules:
 - Include ALL books, even partially visible ones
-- Some spines may be printed upside-down or rotated — mentally rotate them and read the text anyway
+- Some spines may be printed upside-down — mentally rotate them and read the text anyway, do not mark them as unreadable solely because of orientation
 - Do NOT invent or guess titles — if truly unreadable set title to null and needs_review to true
 - For worn, sideways, or obscured spines: extract what you can, set needs_review true, explain in notes
 - Preserve non-Latin scripts (Arabic, Hebrew, Japanese, Chinese, Korean, Cyrillic, etc.) exactly
@@ -44,18 +44,9 @@ Rules:
 
 Return ONLY the JSON array. No prose, no markdown fences."""
 
-RETRY_PROMPT = """This image is a bookshelf photo rotated 180°. Some spines that were unreadable in the original orientation may now be readable.
 
-For each spine in this rotated image, return a JSON array with the same fields as before:
-- "title", "original_title", "author", "language", "row", "position", "bbox", "confidence", "needs_review", "notes"
-
-The bbox coordinates should be for THIS rotated image (I will convert them back).
-Only include books you can actually read — do not include books with null titles unless you have a bbox for them.
-
-Return ONLY the JSON array. No prose, no markdown fences."""
-
-
-def _resize_for_upload(img: Image.Image) -> tuple:
+def _resize_for_upload(image_path: str) -> tuple:
+    img = Image.open(image_path)
     max_dim = 4000
     if max(img.width, img.height) > max_dim:
         ratio = max_dim / max(img.width, img.height)
@@ -65,11 +56,6 @@ def _resize_for_upload(img: Image.Image) -> tuple:
     buf = io.BytesIO()
     img.save(buf, format="JPEG", quality=90)
     return buf.getvalue(), "image/jpeg"
-
-
-def _encode(img: Image.Image) -> tuple[str, str]:
-    data, media_type = _resize_for_upload(img)
-    return base64.standard_b64encode(data).decode("utf-8"), media_type
 
 
 def _parse_json_array(text: str) -> list:
@@ -85,61 +71,12 @@ def _parse_json_array(text: str) -> list:
             return []
 
 
-def _normalise(books: list) -> list:
-    for book in books:
-        book.setdefault("title", None)
-        book.setdefault("original_title", book.get("title"))
-        book.setdefault("author", None)
-        book.setdefault("language", None)
-        book.setdefault("confidence", 0.5)
-        book.setdefault("notes", None)
-        book.setdefault("row", 1)
-        book.setdefault("position", 0)
-        book.setdefault("bbox", None)
-
-        bbox = book.get("bbox")
-        if not (isinstance(bbox, list) and len(bbox) == 4
-                and all(isinstance(v, (int, float)) for v in bbox)):
-            book["bbox"] = None
-
-        if book.get("confidence", 0) < CONFIDENCE_THRESHOLD or not book.get("title"):
-            book["needs_review"] = True
-        else:
-            book.setdefault("needs_review", False)
-    return books
-
-
-def _flip_bbox(bbox: list) -> list:
-    """Convert a bbox from a 180°-rotated image back to original coordinates."""
-    x, y, w, h = bbox
-    return [1 - x - w, 1 - y - h, w, h]
-
-
-def _call_claude(image_data: str, media_type: str, prompt: str) -> list:
-    message = _get_client().messages.create(
-        model="claude-opus-4-7",
-        max_tokens=8096,
-        messages=[{
-            "role": "user",
-            "content": [
-                {"type": "image", "source": {"type": "base64", "media_type": media_type, "data": image_data}},
-                {"type": "text", "text": prompt},
-            ],
-        }],
-    )
-    text = message.content[0].text.strip()
-    if text.startswith("```"):
-        lines = text.splitlines()
-        text = "\n".join(lines[1:-1] if lines[-1].startswith("```") else lines[1:])
-    return _parse_json_array(text)
-
-
 def sample_spine_color(image_path: str, bbox: list) -> str | None:
     """Crop a spine bbox and return its dominant hex color, darkened for readability."""
     try:
         if not (isinstance(bbox, (list, tuple)) and len(bbox) == 4):
             return None
-        img = ImageOps.exif_transpose(Image.open(image_path)).convert("RGB")
+        img = Image.open(image_path).convert("RGB")
         iw, ih = img.size
         x, y, bw, bh = bbox
 
@@ -178,34 +115,51 @@ def sample_spine_color(image_path: str, bbox: list) -> str | None:
 
 
 def extract_books_from_image(image_path: str) -> list:
-    # Respect EXIF orientation so phones photos arrive right-side-up
-    img = ImageOps.exif_transpose(Image.open(image_path))
+    image_bytes, media_type = _resize_for_upload(image_path)
+    image_data = base64.standard_b64encode(image_bytes).decode("utf-8")
 
-    image_data, media_type = _encode(img)
-    books = _normalise(_call_claude(image_data, media_type, EXTRACTION_PROMPT))
+    message = _get_client().messages.create(
+        model="claude-opus-4-7",
+        max_tokens=8096,
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image",
+                        "source": {"type": "base64", "media_type": media_type, "data": image_data},
+                    },
+                    {"type": "text", "text": EXTRACTION_PROMPT},
+                ],
+            }
+        ],
+    )
 
-    # Second pass: rotate 180° and retry only if some books are still unreadable
-    unreadable = [b for b in books if not b.get("title")]
-    if unreadable:
-        rotated = img.rotate(180)
-        rot_data, rot_media = _encode(rotated)
-        retried = _normalise(_call_claude(rot_data, rot_media, RETRY_PROMPT))
+    response_text = message.content[0].text.strip()
+    if response_text.startswith("```"):
+        lines = response_text.splitlines()
+        response_text = "\n".join(lines[1:-1] if lines[-1].startswith("```") else lines[1:])
 
-        # Build a map of existing bboxes to avoid duplicating already-read books
-        existing_bboxes = {
-            tuple(round(v, 2) for v in b["bbox"])
-            for b in books if b.get("bbox") and b.get("title")
-        }
+    books = _parse_json_array(response_text)
 
-        for book in retried:
-            if not book.get("title"):
-                continue
-            # Flip bbox back to original image coordinates
-            if book.get("bbox"):
-                book["bbox"] = _flip_bbox(book["bbox"])
-                flipped_key = tuple(round(v, 2) for v in book["bbox"])
-                if flipped_key in existing_bboxes:
-                    continue  # already captured in first pass
-            books.append(book)
+    for book in books:
+        book.setdefault("title", None)
+        book.setdefault("original_title", book.get("title"))
+        book.setdefault("author", None)
+        book.setdefault("language", None)
+        book.setdefault("confidence", 0.5)
+        book.setdefault("notes", None)
+        book.setdefault("row", 1)
+        book.setdefault("position", 0)
+        book.setdefault("bbox", None)
+
+        bbox = book.get("bbox")
+        if not (isinstance(bbox, list) and len(bbox) == 4 and all(isinstance(v, (int, float)) for v in bbox)):
+            book["bbox"] = None
+
+        if book.get("confidence", 0) < CONFIDENCE_THRESHOLD or not book.get("title"):
+            book["needs_review"] = True
+        else:
+            book.setdefault("needs_review", False)
 
     return books
