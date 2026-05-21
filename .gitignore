@@ -11,9 +11,9 @@ venv/
 backend/.env
 
 # Database
-backend/bookshelf.db
-backend/bookshelf.db-wal
-backend/bookshelf.db-shm
+backend/*.db
+backend/*.db-wal
+backend/*.db-shm
 
 # Uploads (user photos — not committed)
 backend/uploads/*
