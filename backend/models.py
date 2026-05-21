@@ -18,7 +18,7 @@ class Recommendation(Base):
     dismissed = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     source_book = relationship("Book", back_populates="recommendations", foreign_keys=[source_book_id])
-    source_shelf = relationship("Shelf", foreign_keys=[source_shelf_id])
+    source_shelf = relationship("Shelf", foreign_keys=[source_shelf_id], overlaps="recommendations")
 
 
 class Shelf(Base):
@@ -32,7 +32,7 @@ class Shelf(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     shelf_books = relationship("ShelfBook", back_populates="shelf", cascade="all, delete-orphan")
-    recommendations = relationship("Recommendation", foreign_keys="Recommendation.source_shelf_id", cascade="all, delete-orphan")
+    recommendations = relationship("Recommendation", foreign_keys="Recommendation.source_shelf_id", cascade="all, delete-orphan", overlaps="source_shelf")
 
 
 class Book(Base):
