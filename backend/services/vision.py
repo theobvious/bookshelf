@@ -2,6 +2,7 @@ import base64
 import io
 import json
 import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import anthropic
 from PIL import Image, ImageOps
@@ -26,7 +27,7 @@ Then, for every visible book spine, return a JSON array. Each element must have:
 - "title": the title exactly as written on the spine (preserve original language and script, do NOT translate)
 - "original_title": same as title unless you know a more canonical form
 - "author": author name as written on the spine, or null if not visible
-- "language": ISO 639-1 code (e.g. "en", "fr", "de", "es", "it", "ja", "zh", "ar", "ru", etc.)
+- "language": ISO 639-1 code (e.g. "en", "fr", "de", "es", "it", "ja", "zh", "ar", "ru", "he", etc.)
 - "row": integer — which horizontal shelf row this book is on (1 = topmost row visible, 2 = second, etc.)
 - "position": integer — left-to-right index within that row (0 = leftmost)
 - "bbox": [x, y, w, h] — bounding box of this spine as fractions of image width/height (all values 0.0–1.0)
@@ -39,10 +40,35 @@ Rules:
 - Some spines may be printed upside-down — mentally rotate them and read the text anyway, do not mark them as unreadable solely because of orientation
 - Do NOT invent or guess titles — if truly unreadable set title to null and needs_review to true
 - For worn, sideways, or obscured spines: extract what you can, set needs_review true, explain in notes
-- Preserve non-Latin scripts (Arabic, Hebrew, Japanese, Chinese, Korean, Cyrillic, etc.) exactly
+- Preserve non-Latin scripts exactly:
+  * Cyrillic (Russian, Ukrainian, etc.): letters like е, р, с, о, н, х resemble Latin but are different characters — output the Cyrillic, never substitute Latin lookalikes
+  * Hebrew: text runs right-to-left; output words in correct RTL reading order, do not reverse or mirror them
+  * Arabic: right-to-left; preserve Arabic script exactly, including diacritics if visible
+  * CJK: preserve Chinese/Japanese/Korean characters exactly
 - The bbox should tightly wrap the spine including the title text area
 
 Return ONLY the JSON array. No prose, no markdown fences."""
+
+
+REREAD_PROMPT = """This image shows a single book spine. Read it carefully and return a JSON object.
+
+Script-specific guidance:
+- Cyrillic (Russian, Ukrainian, etc.): letters like е, р, с, о, н, х look like Latin but are distinct Cyrillic characters — output the actual Cyrillic, never substitute Latin lookalikes
+- Hebrew: text reads right-to-left; output words in correct RTL order, do not reverse or mirror characters
+- Arabic: right-to-left; preserve Arabic script and any visible diacritics exactly
+- Vertical spines: Western books usually read bottom-to-top; East Asian books top-to-bottom
+- Upside-down spines: mentally rotate and read — do not mark unreadable solely due to orientation
+
+Return ONLY a JSON object with:
+- "title": title exactly as written (original script, do NOT translate)
+- "original_title": same as title unless a more canonical form is known
+- "author": author as written, or null if not visible
+- "language": ISO 639-1 code
+- "confidence": float 0.0–1.0
+- "needs_review": true if confidence < 0.75 or any field uncertain
+- "notes": brief explanation of uncertainty, or null
+
+No prose, no markdown fences."""
 
 
 def _resize_for_upload(image_path: str) -> tuple:
@@ -58,6 +84,38 @@ def _resize_for_upload(image_path: str) -> tuple:
     return buf.getvalue(), "image/jpeg"
 
 
+def _crop_spine_for_reread(image_path: str, bbox: list, min_width: int = 350) -> tuple:
+    """Crop a spine bbox and upscale so Claude gets a close-up view."""
+    try:
+        img = Image.open(image_path).convert("RGB")
+        iw, ih = img.size
+        x, y, bw, bh = bbox
+
+        # Add a small margin (5% of spine width) so edges aren't clipped
+        margin_x = bw * iw * 0.05
+        margin_y = bh * ih * 0.05
+        left   = max(0,  int(x * iw - margin_x))
+        top    = max(0,  int(y * ih - margin_y))
+        right  = min(iw, int((x + bw) * iw + margin_x))
+        bottom = min(ih, int((y + bh) * ih + margin_y))
+
+        if right <= left or bottom <= top:
+            return None, None
+
+        crop = img.crop((left, top, right, bottom))
+        cw, ch = crop.size
+
+        if cw < min_width:
+            scale = min_width / cw
+            crop = crop.resize((int(cw * scale), int(ch * scale)), Image.LANCZOS)
+
+        buf = io.BytesIO()
+        crop.save(buf, format="JPEG", quality=93)
+        return buf.getvalue(), "image/jpeg"
+    except Exception:
+        return None, None
+
+
 def _parse_json_array(text: str) -> list:
     try:
         return json.loads(text)
@@ -69,6 +127,54 @@ def _parse_json_array(text: str) -> list:
             return json.loads(text[: last_brace + 1] + "]")
         except json.JSONDecodeError:
             return []
+
+
+def _reread_spine(image_path: str, book: dict) -> dict:
+    """Send a cropped spine image for a focused second read; merge if confidence improves."""
+    bbox = book.get("bbox")
+    if not (isinstance(bbox, list) and len(bbox) == 4):
+        return book
+
+    img_bytes, media_type = _crop_spine_for_reread(image_path, bbox)
+    if img_bytes is None:
+        return book
+
+    image_data = base64.standard_b64encode(img_bytes).decode("utf-8")
+
+    try:
+        message = _get_client().messages.create(
+            model="claude-opus-4-7",
+            max_tokens=512,
+            messages=[{
+                "role": "user",
+                "content": [
+                    {"type": "image", "source": {"type": "base64", "media_type": media_type, "data": image_data}},
+                    {"type": "text", "text": REREAD_PROMPT},
+                ],
+            }],
+        )
+        text = message.content[0].text.strip()
+        if text.startswith("```"):
+            lines = text.splitlines()
+            text = "\n".join(lines[1:-1] if lines[-1].startswith("```") else lines[1:])
+        result = json.loads(text)
+    except Exception:
+        return book
+
+    new_conf = result.get("confidence", 0)
+    old_conf = book.get("confidence", 0)
+
+    # Accept the re-read if confidence improved or we got a title we didn't have
+    if new_conf > old_conf or (result.get("title") and not book.get("title")):
+        merged = {**book}
+        for k, v in result.items():
+            if v is not None:
+                merged[k] = v
+        if new_conf >= CONFIDENCE_THRESHOLD:
+            merged["needs_review"] = False
+        return merged
+
+    return book
 
 
 def sample_spine_color(image_path: str, bbox: list) -> str | None:
@@ -161,5 +267,17 @@ def extract_books_from_image(image_path: str) -> list:
             book["needs_review"] = True
         else:
             book.setdefault("needs_review", False)
+
+    # Second pass: re-read low-confidence spines concurrently
+    needs_reread = [i for i, b in enumerate(books) if b.get("needs_review") and b.get("bbox")]
+    if needs_reread:
+        with ThreadPoolExecutor(max_workers=6) as pool:
+            futures = {pool.submit(_reread_spine, image_path, books[i]): i for i in needs_reread}
+            for future in as_completed(futures):
+                i = futures[future]
+                try:
+                    books[i] = future.result()
+                except Exception:
+                    pass
 
     return books
